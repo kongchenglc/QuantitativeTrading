@@ -6,8 +6,8 @@ data = nvda.history(period="6y")
 
 
 # Calculate Simple Moving Average (SMA)
-data['SMA_10'] = data['Close'].rolling(window=10).mean()  # 10日均线
-data['SMA_50'] = data['Close'].rolling(window=50).mean()  # 50日均线
+data['SMA_10'] = data['Close'].rolling(window=10).mean()
+data['SMA_50'] = data['Close'].rolling(window=50).mean()
 
 # Calculate Exponential Moving Average (EMA)
 data['EMA_10'] = data['Close'].ewm(span=10, adjust=False).mean()
