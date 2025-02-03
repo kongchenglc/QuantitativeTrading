@@ -22,11 +22,11 @@ def fetch_news(api_key, ticker):
     news_list = []
     for article in articles:
         date = pd.to_datetime(article["publishedAt"]).date()
-        description = article["description"] if article["description"] is not None else ""
+        content = article["content"] if article["content"] is not None else ""
         news_list.append({
             "date": date,
             "title": article["title"],
-            "sentiment": analyze_sentiment(article["title"] + " " + description)
+            "sentiment": analyze_sentiment(article["title"] + " " + content)
         })
 
     news_df = pd.DataFrame(news_list)
