@@ -1,38 +1,47 @@
-import pandas as pd
 import requests
-from nltk.sentiment import SentimentIntensityAnalyzer
-import yfinance as yf
-import nltk
+import pandas as pd
+from bs4 import BeautifulSoup
+from datetime import datetime, timedelta
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
-def fetch_news(api_key, ticker):
+analyzer = SentimentIntensityAnalyzer()
 
-    nltk.download('vader_lexicon')
 
-    def fetch_news(api_key, ticker):
-        url = f"https://newsapi.org/v2/everything?q={ticker}&apiKey={api_key}"
-        response = requests.get(url)
-        articles = response.json().get("articles", [])
-        return articles
+def fetch_news(years=6):
+    news_data = []
 
-    def analyze_sentiment(text):
-        sia = SentimentIntensityAnalyzer()
-        return sia.polarity_scores(text)["compound"]
+    current_year = datetime.now().year
+    for year in range(current_year - years, current_year + 1):
+        date_start = f"{year}-01-01"
+        date_end = f"{year}-12-31"
 
-    articles = fetch_news(api_key, ticker)
-    news_list = []
-    for article in articles:
-        date = pd.to_datetime(article["publishedAt"]).date()
-        content = article["content"] if article["content"] is not None else ""
-        news_list.append({
-            "date": date,
-            "title": article["title"],
-            "sentiment": analyze_sentiment(article["title"] + " " + content)
-        })
+        url = f"https://news.google.com/rss/search?q=NVIDIA+after:{date_start}+before:{date_end}&hl=en-US&gl=US&ceid=US:en"
+        response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+        soup = BeautifulSoup(response.content, "xml")
 
-    news_df = pd.DataFrame(news_list)
-    news_df = news_df.groupby("date")["sentiment"].mean().reset_index()
-    news_df["date"] = pd.to_datetime(news_df["date"])
+        seen_links = set()
+        for item in soup.find_all("item"):
+            link = item.link.text.split("?oc=")[0]
+            if link in seen_links:
+                continue
+            seen_links.add(link)
 
-    news_df.to_csv("./data/NVDA_with_Sentiment.csv")
-    
-    return news_df
+            pub_date = pd.to_datetime(item.pubDate.text)
+            title = item.title.text
+            sentiment = analyzer.polarity_scores(title)["compound"]
+            news_data.append(
+                {
+                    "date": pub_date,
+                    "title": title,
+                    "source": item.source.text,
+                    "link": link,
+                    "sentiment": sentiment,
+                }
+            )
+
+    df = pd.DataFrame(news_data)
+    df = df.drop_duplicates(subset=["link"], keep="first")
+
+    df.sort_values("date", ascending=False, inplace=True)
+    df.to_csv("data/nvidia_news_en.csv", index=False)
+    return df

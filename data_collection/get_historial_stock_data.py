@@ -40,6 +40,6 @@ def fetch_historial_stock_data():
     data['BB_Lower'] = data['BB_Mid'] - 2 * data['Close'].rolling(window=20).std()
 
 
-    data.to_csv("./data/NVDA_Historical_Data.csv")
+    data.to_csv("./data/nvidia_historical_data.csv")
 
     return data

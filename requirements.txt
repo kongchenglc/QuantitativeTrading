@@ -1,5 +1,8 @@
-yfinance
 pandas
 requests
-nltk
+eventregistry
 fredapi
+spacy
+yfinance
+transformers
+vaderSentiment
