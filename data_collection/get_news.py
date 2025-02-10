@@ -31,17 +31,17 @@ def fetch_news(years=6):
             sentiment = analyzer.polarity_scores(title)["compound"]
             news_data.append(
                 {
-                    "date": pub_date,
-                    "title": title,
-                    "source": item.source.text,
-                    "link": link,
-                    "sentiment": sentiment,
+                    "Date": pub_date,
+                    "Title": title,
+                    "Source": item.source.text,
+                    "Link": link,
+                    "Sentiment": sentiment,
                 }
             )
 
     df = pd.DataFrame(news_data)
-    df = df.drop_duplicates(subset=["link"], keep="first")
+    df = df.drop_duplicates(subset=["Link"], keep="first")
 
-    df.sort_values("date", ascending=False, inplace=True)
+    df.sort_values("Date", ascending=True, inplace=True)
     df.to_csv("data/nvidia_news_en.csv", index=False)
     return df

@@ -16,6 +16,8 @@ def fetch_macro_data(api_key):
         "Unemployment Rate": unemployment_rate,
         "GDP Growth": gdp_growth
     })
+    
+    macro_data.index.name = "Date"
 
     macro_data.to_csv("./data/us_macro_data.csv")
     
