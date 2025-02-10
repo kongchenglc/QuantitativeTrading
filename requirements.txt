@@ -2,7 +2,5 @@ pandas
 requests
 eventregistry
 fredapi
-spacy
 yfinance
-transformers
 vaderSentiment
