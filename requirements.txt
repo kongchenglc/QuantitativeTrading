@@ -4,3 +4,4 @@ eventregistry
 fredapi
 yfinance
 vaderSentiment
+beautifulsoup4
