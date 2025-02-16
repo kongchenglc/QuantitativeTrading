@@ -1,7 +1,7 @@
-pandas
-requests
-eventregistry
-fredapi
-yfinance
-vaderSentiment
-beautifulsoup4
+beautifulsoup4==4.13.3
+fredapi==0.5.2
+pandas==2.2.3
+Requests==2.32.3
+torch==2.6.0
+transformers==4.48.3
+yfinance==0.2.53

@@ -2,9 +2,18 @@ import requests
 import pandas as pd
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from transformers import BertTokenizer, BertForSequenceClassification
+import torch
 
-analyzer = SentimentIntensityAnalyzer()
+tokenizer = BertTokenizer.from_pretrained("yiyanghkust/finbert-tone")
+model = BertForSequenceClassification.from_pretrained("yiyanghkust/finbert-tone")
+
+
+def analyze_sentiment_finbert(text):
+    inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
+    outputs = model(**inputs)
+    predictions = torch.nn.functional.softmax(outputs.logits, dim=-1)
+    return predictions.detach().numpy()[0]  # [positive, neutral, negative]
 
 
 def fetch_news(years=6):
@@ -28,14 +37,16 @@ def fetch_news(years=6):
 
             pub_date = pd.to_datetime(item.pubDate.text)
             title = item.title.text
-            sentiment = analyzer.polarity_scores(title)["compound"]
+            sentiment = analyze_sentiment_finbert(title)
             news_data.append(
                 {
                     "Date": pub_date,
                     "Title": title,
                     "Source": item.source.text,
                     "Link": link,
-                    "Sentiment": sentiment,
+                    "Sentiment_Positive": sentiment[0],
+                    "Sentiment_Neutral": sentiment[1],
+                    "Sentiment_Negative": sentiment[2],
                 }
             )
 
@@ -43,5 +54,6 @@ def fetch_news(years=6):
     df = df.drop_duplicates(subset=["Link"], keep="first")
 
     df.sort_values("Date", ascending=True, inplace=True)
-    df.to_csv("data/nvidia_news_en.csv", index=False)
+    df.set_index("Date", inplace=True)
+    df.to_csv("data/nvidia_news_en.csv", index=True)
     return df
