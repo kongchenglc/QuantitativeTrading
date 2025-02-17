@@ -18,7 +18,7 @@ class LSTMModel(nn.Module):
         return self.fc(lstm_out[:, -1, :])  # Take the last timestep output
 
 
-class StockClosePredictor:
+class StockPredictor:
     """Handles data processing, training, prediction, and visualization"""
 
     def __init__(self, df, n_steps=20, hidden_size=64, num_layers=2, lr=0.001, epochs=100):
