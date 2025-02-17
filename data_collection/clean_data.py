@@ -5,6 +5,7 @@ from data_collection.get_news import fetch_news
 
 
 def get_cleaned_data():
+    print('Fetching data...')
     historical_data = fetch_historial_stock_data()
     articles = fetch_news()
     macro_data = fetch_macro_data()

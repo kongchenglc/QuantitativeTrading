@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 
@@ -10,7 +9,7 @@ class LSTMModel(nn.Module):
     """LSTM model for predicting Close price"""
 
     def __init__(self, input_size, hidden_size, num_layers=2):
-        super(LSTMModel, self).__init__()
+        super().__init__()
         self.lstm = nn.LSTM(input_size, hidden_size, num_layers=num_layers, batch_first=True)
         self.fc = nn.Linear(hidden_size, 1)  # Output only Close price
 
@@ -48,7 +47,7 @@ class StockClosePredictor:
         X = np.array(X)
         y = np.array(y)
 
-        return torch.tensor(X, dtype=torch.float32), torch.tensor(y, dtype=torch.float32).unsqueeze(-1), X.shape[2]
+        return torch.tensor(X, dtype=torch.float32), torch.tensor(y, dtype=torch.float32), X.shape[2]
 
     def initialize_model(self):
         """Initialize LSTM model, loss function, and optimizer"""
@@ -58,6 +57,7 @@ class StockClosePredictor:
 
     def train(self):
         """Train the LSTM model"""
+        print('Training model...')
         for epoch in range(self.epochs):
             self.model.train()
             self.optimizer.zero_grad()
@@ -97,6 +97,7 @@ class StockClosePredictor:
 
     def plot_results(self):
         """Plot actual vs. predicted Close prices"""
+        print('Predicting...')
         actual_closes, predicted_closes = self.predict_all()
         predicted_next_close = self.predict_next_close()
 
@@ -112,18 +113,3 @@ class StockClosePredictor:
         plt.show()
 
         print(f"Predicted Next Day Close: {predicted_next_close:.2f}")
-
-
-# ---- Run LSTM Prediction ----
-if __name__ == "__main__":
-    # Load data
-    df = pd.read_csv("data/cleaned_data.csv")
-
-    # Initialize predictor
-    predictor = StockClosePredictor(df, n_steps=20, hidden_size=64, num_layers=2, lr=0.001, epochs=100)
-
-    # Train the model
-    predictor.train()
-
-    # Plot Close price predictions
-    predictor.plot_results()

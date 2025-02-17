@@ -1,5 +1,4 @@
 import yfinance as yf
-import pandas as pd
 
 
 def fetch_historial_stock_data():
