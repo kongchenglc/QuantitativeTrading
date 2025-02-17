@@ -32,16 +32,23 @@ def get_cleaned_data():
     merged_data = merged_data[merged_data.index >= pd.to_datetime('2019-02-15').date()]
     merged_data.index.name = "Date"
 
-    merged_data[['Sentiment_Positive', 'Sentiment_Neutral', 'Sentiment_Negative']] = merged_data[
-        ['Sentiment_Positive', 'Sentiment_Neutral', 'Sentiment_Negative']].ffill()
+    merged_data[['Open', 'Close', 'High', 'Low', 'Volume']] = merged_data[['Open', 'Close', 'High', 'Low', 'Volume']].ffill().bfill()
+    merged_data[['Dividends', 'Stock Splits']] = merged_data[['Dividends', 'Stock Splits']].fillna(0.0)
+
+    # merged_data['Return'] = (merged_data['Close'] - merged_data['Close'].shift(1)) / merged_data['Close'].shift(1)
+    # merged_data = merged_data[1:]
 
     merged_data[['SMA_10', 'SMA_50', 'EMA_10', 'EMA_50', 'RSI_14', 'MACD', 'Signal_Line', 'BB_Mid', 'BB_Upper', 'BB_Lower']] = merged_data[
-        ['SMA_10', 'SMA_50', 'EMA_10', 'EMA_50', 'RSI_14', 'MACD', 'Signal_Line', 'BB_Mid', 'BB_Upper', 'BB_Lower']].interpolate(method='linear')
+        ['SMA_10', 'SMA_50', 'EMA_10', 'EMA_50', 'RSI_14', 'MACD', 'Signal_Line', 'BB_Mid', 'BB_Upper', 'BB_Lower']].ffill().bfill()
 
     merged_data[['Interest Rate', 'Inflation Rate', 'Unemployment Rate', 'GDP Growth']] = merged_data[
-        ['Interest Rate', 'Inflation Rate', 'Unemployment Rate', 'GDP Growth']].ffill()
+        ['Interest Rate', 'Inflation Rate', 'Unemployment Rate', 'GDP Growth']].interpolate(method='linear').ffill().bfill()
 
-    merged_data.fillna(merged_data.mean(), inplace=True)
+    merged_data[['Sentiment_Positive', 'Sentiment_Neutral', 'Sentiment_Negative']] = merged_data[['Sentiment_Positive', 'Sentiment_Neutral', 'Sentiment_Negative']].ffill().bfill()
+    
+    if merged_data.isnull().values.any():
+        missing_columns = merged_data.columns[merged_data.isnull().any()]
+        print(f"Data contains missing values (NaN)! Missing values are in the following columns: {', '.join(missing_columns)}")
+
     merged_data.to_csv("data/cleaned_data.csv", index=True)
-
     return merged_data

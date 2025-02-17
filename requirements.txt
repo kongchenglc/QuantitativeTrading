@@ -1,7 +1,10 @@
 beautifulsoup4==4.13.3
 fredapi==0.5.2
+matplotlib==3.10.0
+numpy==2.2.3
 pandas==2.2.3
 Requests==2.32.3
+scikit_learn==1.6.1
 torch==2.6.0
 transformers==4.48.3
 yfinance==0.2.53
