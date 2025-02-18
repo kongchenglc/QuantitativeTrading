@@ -1,6 +1,6 @@
 # 📈 Quantitative Trading: Nvidia Stock Prediction 🚀
 
-**Work In Progress (WIP):** Currently, only the data collection modules are implemented.
+The project includes a predictive model for forecasting Nvidia's stock price using an LSTM-based neural network.
 
 ---
 
@@ -22,11 +22,12 @@
   - **News & Sentiment Analysis:**  
     Scrapes Nvidia-related news from the Google News RSS feed and computes sentiment scores using VADER.
 
----
-
-## 🛠 Planned Features
-- **Machine Learning Models:**  
-  Develop and integrate predictive models aimed at forecasting Nvidia's stock price movements.
+- **Stock Prediction Model (LSTM)**
+  - **LSTM-based Stock Price Prediction:**  
+    Implements a Long Short-Term Memory (LSTM) model to predict Nvidia's stock closing prices based on historical data.
+  - **Features:**
+    - Predicts closing prices for the next day.
+    - Trains on historical stock data, incorporating sequence-based time series analysis.
 
 ---
 
@@ -41,11 +42,37 @@ pip install -r requirements.txt
 
 ---
 
+## 🧠 LSTM Stock Prediction Model
+
+The LSTM model is designed to predict the closing prices of Nvidia stock based on historical price data. It uses a sequence-based model where past prices are used to predict future prices.
+
+### Key Components:
+- **LSTM Model:**
+  - Input: Historical closing prices (last `n_steps` days).
+  - Output: Predicted closing price for the next day.
+  - The model is built using PyTorch and consists of an LSTM layer followed by a fully connected layer.
+- **Data Preprocessing:**  
+  - The data is normalized using MinMaxScaler.
+  - The dataset is split into training and testing sets, with a rolling window approach for time-series prediction.
+
+### Usage:
+1. **Prepare the Data:**  
+   The data should be in a DataFrame format containing historical stock prices.
+   
+2. **Train the Model:**  
+   Use the `StockPredictor` class to preprocess the data and train the model.
+
+3. **Backtest and Predict:**  
+   After training, perform backtesting on the test set and predict future stock prices.
+
 ## ⚙️ Usage
-Run the main script to execute all the data collection procedures. The script collects:
-- Historical stock data (saved as `data/nvidia_historical_data.csv`)
-- Macro-economic data (saved as `data/us_macro_data.csv`)
-- Nvidia news articles with sentiment scores (saved as `data/nvidia_news_en.csv`)
+Run the main script to execute all the data collection and stock prediction procedures. The script:
+- Collects historical stock data (saved as `data/nvidia_historical_data.csv`)
+- Collects macro-economic data (saved as `data/us_macro_data.csv`)
+- Collects Nvidia news articles with sentiment scores (saved as `data/nvidia_news_en.csv`)
+- Data Cleaning (saved as `data/cleaned_data.csv`)
+- Trains the stock prediction model
+- Performs backtesting and provides predictions for future stock prices
 
 ```bash
 python main.py

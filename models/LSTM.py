@@ -9,28 +9,53 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error
 class LSTMModel(nn.Module):
     """LSTM model for predicting Close price"""
 
-    def __init__(self, input_size, hidden_size, num_layers=2):
+    def __init__(self, input_size, hidden_size, num_layers, dropout):
         super().__init__()
-        self.lstm = nn.LSTM(input_size, hidden_size, num_layers=num_layers, batch_first=True)
-        self.fc = nn.Linear(hidden_size, 1)  # Output only Close price
+        # LSTM layer with dropout between layers
+        self.lstm = nn.LSTM(input_size, hidden_size, num_layers=num_layers, batch_first=True, dropout=dropout)
+        # Dropout layer after LSTM
+        self.dropout = nn.Dropout(dropout)
+        # Fully connected layer for the output
+        self.fc = nn.Linear(hidden_size, 1)
 
     def forward(self, x):
         lstm_out, _ = self.lstm(x)
-        return self.fc(lstm_out[:, -1, :])  # Take the last timestep output
+        # Apply dropout on the output of the last time step
+        x = self.dropout(lstm_out[:, -1, :])
+        return self.fc(x)
 
 
 class StockPredictor:
     """Handles data processing, training, prediction, and visualization"""
 
-    def __init__(self, df, n_steps=60, hidden_size=64, num_layers=2, 
-                 lr=0.001, epochs=100, test_ratio=0.2):
+    def __init__(self, df, n_steps=90, hidden_size=50, num_layers=3, dropout=0.05,
+                 lr=0.001, epochs=2000, test_ratio=0.1, patience=150, l1_lambda=1e-6, l2_weight_decay=1e-6):
+        """
+        Initialize the stock predictor model with provided hyperparameters.
+
+        :param df: Input DataFrame with stock data (requires 'Close' column).
+        :param n_steps: Number of previous time steps to use for prediction.
+        :param hidden_size: Number of hidden units in the LSTM layer.
+        :param num_layers: Number of layers in the LSTM.
+        :param lr: Learning rate for the optimizer.
+        :param epochs: Number of epochs for training.
+        :param test_ratio: The proportion of data to reserve for testing.
+        :param patience: Patience for early stopping, in terms of epochs without improvement.
+        :param dropout: Dropout rate for LSTM layers.
+        :param l1_lambda: Strength of L1 regularization.
+        :param l2_weight_decay: Strength of L2 regularization.
+        """
         self.df = df.copy()
         self.n_steps = n_steps
         self.hidden_size = hidden_size
         self.num_layers = num_layers
+        self.dropout = dropout
         self.lr = lr
         self.epochs = epochs
         self.test_ratio = test_ratio
+        self.patience = patience
+        self.l1_lambda = l1_lambda
+        self.l2_weight_decay = l2_weight_decay
 
         self.model = None
         self.scaler = MinMaxScaler(feature_range=(0, 1))
@@ -72,13 +97,16 @@ class StockPredictor:
 
     def initialize_model(self):
         """Initialize model components"""
-        self.model = LSTMModel(self.feature_size, self.hidden_size, self.num_layers)
+        self.model = LSTMModel(self.feature_size, self.hidden_size, self.num_layers, self.dropout)
         self.criterion = nn.MSELoss()
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.l2_weight_decay)  # L2 Regularization
 
     def train(self):
-        """Train the model"""
+        """Train the model with early stopping and L1 regularization"""
         print('Training model...')
+        best_loss = float('inf')
+        epochs_without_improvement = 0
+
         for epoch in range(self.epochs):
             self.model.train()
             self.optimizer.zero_grad()
@@ -86,11 +114,26 @@ class StockPredictor:
             output = self.model(self.X_train)
             loss = self.criterion(output, self.y_train)
 
+            # L1 Regularization
+            l1_norm = sum(p.abs().sum() for p in self.model.parameters())  # L1 regularization term
+            loss += self.l1_lambda * l1_norm  # Add L1 term to the loss
+
             loss.backward()
             self.optimizer.step()
 
             if epoch % 10 == 0:
                 print(f"Epoch {epoch+1}/{self.epochs}, Loss: {loss.item():.6f}")
+
+            # Early stopping logic
+            if loss.item() < best_loss:
+                best_loss = loss.item()
+                epochs_without_improvement = 0
+            else:
+                epochs_without_improvement += 1
+
+            if epochs_without_improvement >= self.patience:
+                print(f"Early stopping at epoch {epoch+1} due to no improvement in loss")
+                break
 
     def backtest(self):
         """Perform backtesting on test set"""

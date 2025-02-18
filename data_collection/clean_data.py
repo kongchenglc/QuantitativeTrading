@@ -36,8 +36,8 @@ def get_cleaned_data():
     merged_data[['Open', 'Close', 'High', 'Low', 'Volume']] = merged_data[['Open', 'Close', 'High', 'Low', 'Volume']].ffill()
     merged_data[['Dividends', 'Stock Splits']] = merged_data[['Dividends', 'Stock Splits']].fillna(0.0)
 
-    merged_data['Return'] = (merged_data['Close'] - merged_data['Close'].shift(1)) / merged_data['Close'].shift(1)
-    merged_data = merged_data[1:]
+    # merged_data['Return'] = (merged_data['Close'] - merged_data['Close'].shift(1)) / merged_data['Close'].shift(1)
+    # merged_data = merged_data[1:]
 
     merged_data[['SMA_10', 'SMA_50', 'EMA_10', 'EMA_50', 'RSI_14', 'MACD', 'Signal_Line', 'BB_Mid', 'BB_Upper', 'BB_Lower']] = merged_data[
         ['SMA_10', 'SMA_50', 'EMA_10', 'EMA_50', 'RSI_14', 'MACD', 'Signal_Line', 'BB_Mid', 'BB_Upper', 'BB_Lower']].ffill()
@@ -55,6 +55,7 @@ def get_cleaned_data():
             print(f"Data contains missing values (NaN)! Row {index} has missing data in columns: {missing_columns}")
        
     merged_data = merged_data.dropna()
+    print("Missed row dropped!")
 
     merged_data.to_csv("data/cleaned_data.csv", index=True)
     return merged_data
