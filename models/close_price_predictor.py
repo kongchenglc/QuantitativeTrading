@@ -218,19 +218,6 @@ class StockPricePredictor:
 
         return rmse
 
-    def predict_next_close(self):
-        self.model.eval()
-        last_n_days = self.df[self.features].values[-self.n_steps :]
-        last_n_days_scaled = self.scaler.transform(last_n_days)
-        input_tensor = (
-            torch.tensor(last_n_days_scaled, dtype=torch.float32)
-            .unsqueeze(0)
-            .to(self.device)
-        )
-        with torch.no_grad():
-            predicted_scaled = self.model(input_tensor).item()
-        return self.result_scaler.inverse_transform([[predicted_scaled]])[0][0]
-
     def plot_results(self):
         """Plot training results"""
         self.model.eval()
@@ -263,3 +250,35 @@ class StockPricePredictor:
             plt.ylabel("Price")
             plt.legend()
             plt.show()
+
+    def predict_next_day(self):
+        """Predict the next day's return and closing price"""
+        self.model.eval()  # Set model to evaluation mode
+        last_n_days = self.df[self.features].values[-self.n_steps :]
+        last_close_price = self.df["Close"].values[-1]  # Get the last closing price
+
+        # Normalize input data
+        last_n_days_scaled = self.scaler.transform(last_n_days)
+        input_tensor = (
+            torch.tensor(last_n_days_scaled, dtype=torch.float32)
+            .unsqueeze(0)  # Add batch dimension
+            .to(self.device)
+        )
+
+        with torch.no_grad():
+            predicted_close_price_scaled = self.model(
+                input_tensor
+            ).item()  # Predict normalized return
+
+        # Inverse transform return
+        predicted_close_price = self.result_scaler.inverse_transform(
+            [[predicted_close_price_scaled]]
+        )[0][0]
+
+        # Calculate predicted next-day close price
+        predicted_return = (predicted_close_price - last_close_price) / last_close_price
+
+        print(f"Predicted Next Day Close Price: {predicted_close_price:.2f}")
+        print(f"Predicted Next Day Return: {predicted_return * 100:.2f}%")
+
+        return predicted_close_price, predicted_return

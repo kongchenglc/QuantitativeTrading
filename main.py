@@ -28,9 +28,16 @@ def main():
             "EMA_10",
             "SMA_10",
             "SMA_50",
+            "BB_Mid",
+            "Sentiment_Positive",
+            "Close",
+            "RSI_14",
+            "MACD",
+            "Volume",
+            "Signal_Line",
+            "Sentiment_Negative",
             "BB_Lower",
             "BB_Upper",
-            "BB_Mid",
         ],
         **{
             "n_steps": 70,
@@ -70,6 +77,7 @@ def main():
     predictor.train()
     predictor.plot_results()
     predictor.backtest()
+    predictor.predict_next_day()
 
 
 if __name__ == "__main__":

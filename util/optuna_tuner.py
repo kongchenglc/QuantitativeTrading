@@ -23,43 +23,20 @@ def objective(trial):
     lr = trial.suggest_float("lr", 1e-4, 1e-2)
     l2_weight_decay = trial.suggest_float("l2_weight_decay", 1e-7, 1e-4)
 
-    model = StockPricePredictor(
-        df,
-        device,
-        features=[
-            "Low",
-            "High",
-            "EMA_50",
-            "Open",
-            "EMA_10",
-            "SMA_10",
-            "SMA_50",
-            "BB_Lower",
-            "BB_Upper",
-            "BB_Mid",
-        ],
-        n_steps=n_steps,
-        hidden_size=hidden_size,
-        num_layers=num_layers,
-        dropout=dropout,
-        lr=lr,
-        l2_weight_decay=l2_weight_decay,
-    )
-
-    # model = StockReturnPredictor(
+    # model = StockPricePredictor(
     #     df,
     #     device,
     #     features=[
-    #         "Close",
-    #         "RSI_14",
-    #         "Volume",
+    #         "Low",
+    #         "High",
+    #         "EMA_50",
     #         "Open",
-    #         "MACD",
-    #         "Signal_Line",
+    #         "EMA_10",
+    #         "SMA_10",
+    #         "SMA_50",
     #         "BB_Lower",
-    #         "Sentiment_Negative",
-    #         "Sentiment_Neutral",
     #         "BB_Upper",
+    #         "BB_Mid",
     #     ],
     #     n_steps=n_steps,
     #     hidden_size=hidden_size,
@@ -68,6 +45,29 @@ def objective(trial):
     #     lr=lr,
     #     l2_weight_decay=l2_weight_decay,
     # )
+
+    model = StockReturnPredictor(
+        df,
+        device,
+        # features=[
+        #     "Close",
+        #     "RSI_14",
+        #     "Volume",
+        #     "Open",
+        #     "MACD",
+        #     "Signal_Line",
+        #     "BB_Lower",
+        #     "Sentiment_Negative",
+        #     "Sentiment_Neutral",
+        #     "BB_Upper",
+        # ],
+        n_steps=n_steps,
+        hidden_size=hidden_size,
+        num_layers=num_layers,
+        dropout=dropout,
+        lr=lr,
+        l2_weight_decay=l2_weight_decay,
+    )
 
     model.train()
 

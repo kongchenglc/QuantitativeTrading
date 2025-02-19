@@ -153,12 +153,35 @@ def perform_feature_selection(data_path, target, n_top_features=10, show_plot=Tr
     return best_features
 
 
-target = "Close"
+target = "Return"
 data_path = "data/cleaned_data.csv"
 n_top_features = 10
 
 best_features_without_plot = perform_feature_selection(
     data_path, target, n_top_features, show_plot=True
 )
-print(f'Best {n_top_features} features:')
-print(best_features_without_plot['Feature'].values)
+print(f"Best {n_top_features} features:")
+print(best_features_without_plot["Feature"].values)
+
+# Close ==> ['Low' 'High' 'EMA_50' 'Open' 'EMA_10' 'SMA_10' 'SMA_50' 'BB_Lower' 'BB_Upper' 'BB_Mid']
+# Return ==> ['Sentiment_Positive' 'Close' 'RSI_14' 'Open' 'MACD' 'Volume' 'Signal_Line' 'Sentiment_Negative' 'BB_Lower' 'BB_Upper']
+# Merged:
+#     [
+#         "Low",
+#         "High",
+#         "EMA_50",
+#         "Open",
+#         "EMA_10",
+#         "SMA_10",
+#         "SMA_50",
+#         "BB_Mid",
+#         "Sentiment_Positive",
+#         "Close",
+#         "RSI_14",
+#         "MACD",
+#         "Volume",
+#         "Signal_Line",
+#         "Sentiment_Negative",
+#         "BB_Lower",
+#         "BB_Upper",
+#     ]

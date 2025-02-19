@@ -40,7 +40,7 @@ class StockReturnPredictor:
         num_layers=3,
         dropout=0,
         l2_weight_decay=0,
-        test_ratio=0.1,
+        test_ratio=0.2,
         features=None,  # Add features as a parameter
     ):
         """
@@ -299,3 +299,31 @@ class StockReturnPredictor:
             # Show the plots
             plt.tight_layout()
             plt.show()
+
+    def predict_next_day(self):
+        """Predict the next day's stock return and closing price"""
+        self.model.eval()  # Set model to evaluation mode
+        last_n_days = self.df[self.features].values[-self.n_steps :]
+        last_close_price = self.df["Close"].values[-1]  # Get the last closing price
+
+        # Normalize input data
+        last_n_days_scaled = self.scaler.transform(last_n_days)
+        input_tensor = (
+            torch.tensor(last_n_days_scaled, dtype=torch.float32)
+            .unsqueeze(0)  # Add batch dimension
+            .to(self.device)
+        )
+
+        with torch.no_grad():
+            predicted_return_scaled = self.model(input_tensor).item()  # Predict normalized return
+
+        # Inverse transform return
+        predicted_return = self.result_scaler.inverse_transform([[predicted_return_scaled]])[0][0]
+
+        # Calculate predicted closing price
+        predicted_close_price = last_close_price * (1 + predicted_return)
+
+        print(f"Predicted Next Day Return: {predicted_return * 100:.2f}%")
+        print(f"Predicted Next Day Close Price: {predicted_close_price:.2f}")
+
+        return predicted_return, predicted_close_price
