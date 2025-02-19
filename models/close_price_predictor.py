@@ -27,22 +27,23 @@ class LSTMModel(nn.Module):
         return self.fc(lstm_out[:, -1, :])  # Take the last timestep output
 
 
-class StockPredictor:
+class StockPricePredictor:
     """Handles data processing, training, prediction, and visualization"""
 
     def __init__(
         self,
         df,
         device,
+        epochs=1500,
+        patience=30,
+        lr=0.0001,
         n_steps=10,
         hidden_size=50,
         num_layers=3,
         dropout=0,
-        lr=0.0001,
-        epochs=1500,
-        test_ratio=0.2,
-        patience=30,
         l2_weight_decay=0,
+        test_ratio=0.1,
+        features=None,  # New parameter to select features
     ):
         """
         Initialize the stock predictor model with provided hyperparameters.
@@ -57,6 +58,7 @@ class StockPredictor:
         :param test_ratio: The proportion of data to reserve for testing.
         :param patience: Patience for early stopping, in terms of epochs without improvement.
         :param l2_weight_decay: Strength of L2 regularization.
+        :param features: List of features to use for the model, if None, use all columns except 'Date' and 'index'
         """
         self.df = df.copy()
         self.device = device  # Store the device for later use
@@ -69,6 +71,11 @@ class StockPredictor:
         self.patience = patience
         self.dropout = dropout
         self.l2_weight_decay = l2_weight_decay
+        self.features = (
+            features
+            if features is not None
+            else [col for col in self.df.columns if col not in ["index", "Date"]]
+        )  # Default to all columns except 'Date' and 'index'
 
         self.model = None
         self.scaler = MinMaxScaler(feature_range=(0, 1))
@@ -82,9 +89,8 @@ class StockPredictor:
         """Prepare training and testing data with time series split"""
         data = self.df.dropna()  # Remove rows with NaN values
 
-        feature_columns = [
-            col for col in self.df.columns if col not in ["index", "Date"]
-        ]  # 包含Close
+        # Use the features provided (self.features)
+        feature_columns = self.features
 
         # Split data into train and test segments
         train_size = int(len(data) * (1 - self.test_ratio))
@@ -170,7 +176,7 @@ class StockPredictor:
                 )
                 break
 
-    def backtest(self, show_plt=True):
+    def backtest(self, show_plot=True):
         """Perform backtesting on test set"""
         self.model.eval()
         with torch.no_grad():
@@ -194,7 +200,7 @@ class StockPredictor:
             print("\nBacktest Results:")
             print(f"MSE: {mse:.4f}, MAE: {mae:.4f}, RMSE: {rmse:.4f}")
 
-            if show_plt:
+            if show_plot:
                 # Plot results
                 plt.figure(figsize=(12, 6))
                 plt.plot(actual_test_close, label="Actual Close", color="blue")
@@ -214,10 +220,7 @@ class StockPredictor:
 
     def predict_next_close(self):
         self.model.eval()
-        feature_columns = [
-            col for col in self.df.columns if col not in ["index", "Date"]
-        ]
-        last_n_days = self.df[feature_columns].values[-self.n_steps :]
+        last_n_days = self.df[self.features].values[-self.n_steps :]
         last_n_days_scaled = self.scaler.transform(last_n_days)
         input_tensor = (
             torch.tensor(last_n_days_scaled, dtype=torch.float32)
@@ -260,73 +263,3 @@ class StockPredictor:
             plt.ylabel("Price")
             plt.legend()
             plt.show()
-
-    # def generate_trading_signals(self):
-    #     """Generate buy/hold/sell signals based on predicted returns, price change, and trend direction."""
-    #     self.model.eval()
-
-    #     # Rolling prediction using all test data
-    #     predicted_prices = []
-    #     actual_prices = self.scaler.inverse_transform(self.y_test.cpu().numpy().reshape(-1, 1)).flatten()
-
-    #     with torch.no_grad():
-    #         for i in range(len(self.X_test)):
-    #             input_tensor = self.X_test[i].unsqueeze(0).to(self.device)  # Move to device
-    #             predicted_scaled = self.model(input_tensor).item()
-    #             predicted_price = self.scaler.inverse_transform([[predicted_scaled]])[0][0]
-    #             predicted_prices.append(predicted_price)
-
-    #     predicted_prices = np.array(predicted_prices)
-
-    #     # Calculate predicted daily return (percentage change)
-    #     predicted_change = (predicted_prices[1:] - actual_prices[:-1]) / actual_prices[:-1]
-
-    #     # Generate buy signal: if predicted return > 1% and the trend is upward (predicted price continues to rise)
-    #     buy_signals = np.full_like(predicted_change, np.nan)
-    #     for i in range(1, len(predicted_change)-1):
-    #         if predicted_change[i] > 0.01 and np.all(predicted_change[i:i+3] > 0):  # Trend is upwards for the next 3 days
-    #             buy_signals[i] = actual_prices[i]
-
-    #     # Generate sell signal: if predicted return < -1% or the trend is downward
-    #     sell_signals = np.full_like(buy_signals, np.nan, dtype=float)
-    #     for i in range(1, len(buy_signals)):
-    #         if not np.isnan(buy_signals[i-1]):  # If there was a buy signal the previous day
-    #             # Calculate the price change the next day
-    #             price_change = (actual_prices[i] - actual_prices[i-1]) / actual_prices[i-1]
-    #             # If the price drops more than 1% or trend is downward, generate a sell signal
-    #             if price_change < -0.01 or np.all(predicted_change[i:i+3] < 0):  # Trend is downward for the next 3 days
-    #                 sell_signals[i] = actual_prices[i]
-
-    #     # Generate hold signals: any day that is neither a buy nor sell
-    #     hold_signals = np.full_like(buy_signals, np.nan, dtype=float)
-    #     for i in range(len(buy_signals)):
-    #         if np.isnan(buy_signals[i]) and np.isnan(sell_signals[i]):
-    #             hold_signals[i] = actual_prices[i]
-
-    #     # Plot the price curves
-    #     plt.figure(figsize=(12, 6))
-    #     plt.plot(actual_prices, label='Actual Close Price', color='blue', linewidth=1.5)
-    #     plt.plot(predicted_prices, label='Predicted Close Price', color='red', linestyle='--', alpha=0.7)
-
-    #     # Mark buy points (green ▲)
-    #     plt.scatter(np.where(~np.isnan(buy_signals))[0], buy_signals[~np.isnan(buy_signals)],
-    #                 marker='^', color='green', label='Buy Signal', s=100)
-
-    #     # Mark sell points (red ▼)
-    #     plt.scatter(np.where(~np.isnan(sell_signals))[0], sell_signals[~np.isnan(sell_signals)],
-    #                 marker='v', color='red', label='Sell Signal', s=100)
-
-    #     # Mark hold points (yellow ◯)
-    #     plt.scatter(np.where(~np.isnan(hold_signals))[0], hold_signals[~np.isnan(hold_signals)],
-    #                 marker='o', color='yellow', label='Hold Signal', s=100)
-
-    #     # Add grid, display ticks by day
-    #     plt.xticks(range(0, len(actual_prices), 1))  # Display tick for each day
-    #     plt.grid(True, linestyle='--', linewidth=0.5, alpha=0.7)
-
-    #     # Add title and labels
-    #     plt.title('Trading Signals Based on Predicted Price Movements with Trend Analysis')
-    #     plt.xlabel('Time Steps (Days)')
-    #     plt.ylabel('Stock Price')
-    #     plt.legend()
-    #     plt.show()
