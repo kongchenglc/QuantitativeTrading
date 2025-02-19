@@ -283,6 +283,6 @@ class StockPricePredictor:
 
         return predicted_close_price, predicted_return
 
-    def objective():
-        objective_value = 0 # Todo: Maximize Return and similarity. Minimise objective_value
-        return objective_value
+    def evaluate(self):
+        objective_score = 0 # Todo: Maximize Return and similarity. Minimise objective_score
+        return objective_score
