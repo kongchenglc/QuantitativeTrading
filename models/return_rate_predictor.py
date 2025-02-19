@@ -22,9 +22,10 @@ class LSTMModel(nn.Module):
 class StockPredictor:
     """Handles data processing, training, prediction, and visualization"""
 
-    def __init__(self, df, device, n_steps=60, hidden_size=50, num_layers=3,
-                 lr=0.0001, epochs=1000, test_ratio=0.1, dropout=0.3, 
-                 l2_weight_decay=1e-3, early_stopping_patience=50):
+    def __init__(self, df, device, n_steps=10, hidden_size=50, num_layers=3,
+                 lr=0.0001, epochs=10000, test_ratio=0.1, dropout=0, 
+                 l2_weight_decay=0, early_stopping_patience=50):
+        
         """
         Initialize the stock predictor model with provided hyperparameters.
 

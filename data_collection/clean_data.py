@@ -2,13 +2,23 @@ import pandas as pd
 from data_collection.get_historial_stock_data import fetch_historial_stock_data
 from data_collection.get_marco_data import fetch_macro_data
 from data_collection.get_news import fetch_news
+from datetime import datetime
 
 
 def get_cleaned_data():
     print('Fetching data...')
-    historical_data = fetch_historial_stock_data()
+    # historical_data = fetch_historial_stock_data()
+    historical_data = pd.read_csv("data/nvidia_historical_data.csv", index_col="Date")
     articles = fetch_news()
     macro_data = fetch_macro_data()
+    
+    # Because we can only get data from one month ago, need to shift(1)
+    current_month = datetime.today().date().replace(day=1)
+    empty_row = pd.DataFrame([[None] * len(macro_data.columns)], columns=macro_data.columns, index=[current_month])
+    macro_data = pd.concat([macro_data, empty_row])
+    macro_data[['Interest Rate', 'Inflation Rate', 'Unemployment Rate', 'GDP Growth']] = macro_data[
+        ['Interest Rate', 'Inflation Rate', 'Unemployment Rate', 'GDP Growth']].shift(1)
+
 
     historical_data.index = pd.to_datetime(historical_data.index).date
     articles.index = pd.to_datetime(articles.index).date
@@ -36,9 +46,6 @@ def get_cleaned_data():
     merged_data[['Open', 'Close', 'High', 'Low', 'Volume']] = merged_data[['Open', 'Close', 'High', 'Low', 'Volume']].ffill()
     merged_data[['Dividends', 'Stock Splits']] = merged_data[['Dividends', 'Stock Splits']].fillna(0.0)
 
-    # merged_data['Return'] = (merged_data['Close'] - merged_data['Close'].shift(1)) / merged_data['Close'].shift(1)
-    # merged_data = merged_data[1:]
-
     merged_data[['SMA_10', 'SMA_50', 'EMA_10', 'EMA_50', 'RSI_14', 'MACD', 'Signal_Line', 'BB_Mid', 'BB_Upper', 'BB_Lower']] = merged_data[
         ['SMA_10', 'SMA_50', 'EMA_10', 'EMA_50', 'RSI_14', 'MACD', 'Signal_Line', 'BB_Mid', 'BB_Upper', 'BB_Lower']].ffill()
 
@@ -56,6 +63,15 @@ def get_cleaned_data():
        
     merged_data = merged_data.dropna()
     print("Missed row dropped!")
+    
+    # Ensure the dates are continuous
+    full_date_range = pd.date_range(start=merged_data.index.min(), end=merged_data.index.max(), freq='D')
+    merged_data = merged_data.reindex(full_date_range)
+    merged_data = merged_data.ffill()
+    
+    merged_data["Return"] = merged_data["Close"].pct_change()
+    merged_data = merged_data[1:]
 
+    merged_data.index.name = "Date"
     merged_data.to_csv("data/cleaned_data.csv", index=True)
     return merged_data
