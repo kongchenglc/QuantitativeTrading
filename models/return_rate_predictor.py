@@ -327,3 +327,7 @@ class StockReturnPredictor:
         print(f"Predicted Next Day Close Price: {predicted_close_price:.2f}")
 
         return predicted_return, predicted_close_price
+
+    def objective():
+        objective_value = 0 # Todo: Maximize Return and similarity. Minimise objective_value
+        return objective_value

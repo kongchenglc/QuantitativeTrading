@@ -71,9 +71,7 @@ def objective(trial):
 
     model.train()
 
-    # Calculate validation loss
-    loss = model.backtest(show_plot=False)
-    return loss  # The objective is to minimize the loss
+    return model.objective()  # The objective is to minimize it
 
 
 # Run 50 trials
