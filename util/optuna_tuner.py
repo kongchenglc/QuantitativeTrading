@@ -73,9 +73,9 @@ def callback(study, trial):
     best_params = study.best_params
     best_value = study.best_value
     print('------------')
-    print(f"New best trial: {trial.number}")
-    print(f"  Value: {best_value}")
-    print(f"  Parameters: {best_params}")
+    print(f"Best trial: {study.best_trial}")
+    print(f"Best Value: {best_value}")
+    print(f"Best Parameters: {best_params}")
     print('------------')
 
 
