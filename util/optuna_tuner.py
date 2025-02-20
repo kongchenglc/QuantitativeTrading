@@ -66,7 +66,7 @@ def objective(trial):
 
 
 # Run 50 trials
-study = optuna.create_study(direction="minimize")
+study = optuna.create_study(direction="maximize")
 study.optimize(objective, n_trials=50, timeout=3600)
 
 # Output the best parameters
