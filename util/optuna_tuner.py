@@ -62,7 +62,7 @@ def objective(trial):
 
     model.train()
 
-    return model.evaluate(show_plot=False)  # The objective
+    return model.test(show_plot=False)  # The objective
 
 
 # Run 50 trials

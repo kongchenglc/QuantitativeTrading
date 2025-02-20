@@ -39,13 +39,13 @@ def main():
         #     "BB_Upper",
         # ],
         **{
-            "n_steps": 30,
+            "n_steps": 90,
             "hidden_size": 100,
             "num_layers": 1,
-            "dropout": 0.4667700020967636,
-            "lr": 0.0036156504995540923,
-            "l1_weight_decay": 0.0,
-            "l2_weight_decay": 2.134486544547339e-06,
+            "dropout": 0.2159311577299293,
+            "lr": 0.005097796045513521,
+            "l1_weight_decay": 8.017865606374595e-07,
+            "l2_weight_decay": 0.0007019470271381507,
         }
     )
 

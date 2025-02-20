@@ -35,7 +35,7 @@ class StockPricePredictor:
         self,
         df,
         device,
-        epochs=3000,
+        epochs=2000,
         patience=30,
         lr=0.0001,
         n_steps=10,
@@ -190,109 +190,83 @@ class StockPricePredictor:
                 break
 
     def plot_results(self):
-        """Plot training results"""
+        """Plot actual vs. predicted stock prices"""
         self.model.eval()
         with torch.no_grad():
-            train_pred = (
-                self.model(self.X_train).cpu().numpy().flatten()
-            )  # Move to CPU for plotting
+            predictions = self.model(self.X_train).cpu().numpy()
+            actual_values = self.y_train.cpu().numpy()
 
-            # Inverse scaling
-            train_pred_original = self.result_scaler.inverse_transform(
-                train_pred.reshape(-1, 1)
+            predictions = self.result_scaler.inverse_transform(predictions).flatten()
+            actual_values = self.result_scaler.inverse_transform(
+                actual_values
             ).flatten()
-            actual_train_close = self.df["Close"].iloc[: len(self.X_train)].values
 
-            plt.figure(figsize=(12, 6))
-            plt.plot(actual_train_close, label="Actual Close", color="blue")
-            plt.plot(
-                train_pred_original,
-                label="Predicted Close",
-                color="orange",
-                linestyle="--",
-            )
-            # Add grid, display ticks by day
-            plt.xticks(
-                range(0, len(train_pred_original), 1)
-            )  # Display tick for each day
-            plt.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
-            plt.title("Training Results")
-            plt.xlabel("Time Steps")
-            plt.ylabel("Price")
-            plt.legend()
-            plt.show()
+        plt.figure(figsize=(12, 6))
+        plt.plot(
+            range(len(actual_values)),
+            actual_values,
+            label="Actual Prices",
+            color="blue",
+            linewidth=2,
+        )
+        plt.plot(
+            range(len(predictions)),
+            predictions,
+            label="Predicted Prices",
+            color="red",
+            linestyle="dashed",
+            linewidth=2,
+        )
+        plt.xticks(range(0, len(predictions), 1))
+        plt.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
+        plt.title("Train: Actual vs Predicted")
+        plt.xlabel("Time Steps")
+        plt.ylabel("Stock Price")
+        plt.legend()
+        plt.show()
 
     def test(self, show_plot=True):
         """Perform testing on test set"""
         self.model.eval()
         with torch.no_grad():
-            test_pred = (
-                self.model(self.X_test).cpu().numpy().flatten()
-            )  # Move to CPU for plotting
+            test_pred = self.model(self.X_test).cpu().numpy()
+            actual_test_close = self.y_test.cpu().numpy()
 
-            # Inverse scaling
-            test_pred = self.result_scaler.inverse_transform(
-                test_pred.reshape(-1, 1)
+            test_pred = self.result_scaler.inverse_transform(test_pred).flatten()
+            actual_test_close = self.result_scaler.inverse_transform(
+                actual_test_close
             ).flatten()
-            actual_test_close = (
-                self.df["Close"].iloc[len(self.df) - len(self.y_test) :].values
-            )
 
-            # Calculate metrics
+            test_indices = range(len(test_pred))
+
             mse = mean_squared_error(actual_test_close, test_pred)
             mae = mean_absolute_error(actual_test_close, test_pred)
             rmse = np.sqrt(mse)
 
-            print("\nBacktest Results:")
+            print("\nTest Results:")
             print(f"MSE: {mse:.4f}, MAE: {mae:.4f}, RMSE: {rmse:.4f}")
 
             if show_plot:
-                # Plot results
                 plt.figure(figsize=(12, 6))
-                plt.plot(actual_test_close, label="Actual Close", color="blue")
                 plt.plot(
-                    test_pred, label="Predicted Close", color="red", linestyle="--"
+                    test_indices, actual_test_close, label="Actual Close", color="blue"
                 )
-                # Add grid, display ticks by day
-                plt.xticks(range(0, len(test_pred), 1))  # Display tick for each day
+                plt.plot(
+                    test_indices,
+                    test_pred,
+                    label="Predicted Close",
+                    color="red",
+                    linestyle="--",
+                )
+                plt.xticks(range(0, len(test_pred), 1))
                 plt.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
-                plt.title("Backtest Results")
+                plt.title("Test Results")
                 plt.xlabel("Time Steps")
                 plt.ylabel("Price")
                 plt.legend()
                 plt.show()
 
         return rmse
-
-    def evaluate(self, show_plot=True):
-        self.model.eval()
-        with torch.no_grad():
-            # Predict on the validation set
-            valid_pred = self.model(self.X_test).cpu().numpy().flatten()
-            valid_pred = self.result_scaler.inverse_transform(
-                valid_pred.reshape(-1, 1)
-            ).flatten()
-            # Assume the actual validation values are in the last segment of df["Close"]
-            actual_valid_close = self.df["Close"].iloc[-len(valid_pred) :].values
-
-        # Calculate the RMSE for the validation set
-        valid_rmse = np.sqrt(mean_squared_error(actual_valid_close, valid_pred))
-
-        print("Validation RMSE: {:.4f}".format(valid_rmse))
-
-        if show_plot:
-            plt.figure(figsize=(12, 6))
-            plt.plot(actual_valid_close, label="Validation Actual", color="blue")
-            plt.plot(
-                valid_pred, label="Validation Predicted", color="red", linestyle="--"
-            )
-            plt.title("Validation Predictions")
-            plt.xlabel("Time Steps")
-            plt.ylabel("Price")
-            plt.legend()
-            plt.show()
-
-        return valid_rmse
 
     # WIP
     def trade_signal(self, show_plot=True):

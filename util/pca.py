@@ -4,6 +4,7 @@ from sklearn.preprocessing import StandardScaler
 
 
 def pca(df):
+    print("PCAing...")
     # Check if 'Date' and 'Close' columns are in the dataframe
     if "Close" not in df.columns:
         raise ValueError("The input DataFrame must contain 'Close' columns.")
@@ -45,4 +46,5 @@ def pca(df):
     # Save the PCA results to a CSV file
     df_pca.to_csv("data/pca_data.csv", index=True)
 
+    print("PCA Done")
     return df_pca
