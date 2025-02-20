@@ -14,40 +14,33 @@ def main():
         device = torch.device("cpu")
         print("MPS device is not available, defaulting to CPU.")
 
-    # data = get_cleaned_data()
-    data = pd.read_csv("data/cleaned_data.csv", index_col="Date")
+    data = get_cleaned_data()
+    # data = pd.read_csv("data/cleaned_data.csv", index_col="Date")
     # data = pca(data)
     predictor = StockReturnPredictor(
         data,
         device,
         features=[
-            "Low",
-            "High",
-            "Open",
             "Close",
-            "EMA_10",
-            "EMA_50",
-            "SMA_10",
-            "SMA_50",
-            "BB_Mid",
-            "Sentiment_Positive",
             "RSI_14",
-            "MACD",
             "Volume",
-            "Signal_Line",
             "Sentiment_Negative",
-            "BB_Lower",
-            "BB_Upper",
+            "MACD",
+            "Open",
+            "Signal_Line",
+            "Sentiment_Positive",
+            "Weekday",
+            "EMA_50",
         ],
         **{
-            "n_steps": 56,
-            "hidden_size": 10,
+            "n_steps": 51,
+            "hidden_size": 70,
             "num_layers": 1,
-            "dropout": 0.18586952964756054,
-            "lr": 0.0020896342748212677,
-            "l1_weight_decay": 0.00017979197881835818,
-            "l2_weight_decay": 4.293130104168741e-05,
-        }
+            "dropout": 0.2058109162360236,
+            "lr": 0.006446231866757532,
+            "l1_weight_decay": 0.0006212931938381016,
+            "l2_weight_decay": 0.0006751080354646047,
+        },
     )
 
     predictor.train()

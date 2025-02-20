@@ -7,8 +7,8 @@ from datetime import datetime
 
 def get_cleaned_data():
     print('Fetching data...')
-    historical_data = fetch_historial_stock_data()
-    # historical_data = pd.read_csv("data/nvidia_historical_data.csv", index_col="Date")
+    # historical_data = fetch_historial_stock_data()
+    historical_data = pd.read_csv("data/nvidia_historical_data.csv", index_col="Date")
     articles = fetch_news()
     macro_data = fetch_macro_data()
     
@@ -71,6 +71,8 @@ def get_cleaned_data():
     
     merged_data["Return"] = merged_data["Close"].pct_change()
     merged_data = merged_data[1:]
+    merged_data["Weekday"] = merged_data.index.weekday
+    merged_data["Month"] = merged_data.index.month
 
     merged_data.index.name = "Date"
     merged_data.to_csv("data/cleaned_data.csv", index=True)

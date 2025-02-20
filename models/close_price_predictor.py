@@ -45,7 +45,7 @@ class StockPricePredictor:
         dropout=0,
         l2_weight_decay=0,
         l1_weight_decay=0,  # New parameter for L1 regularization
-        test_ratio=0.2,
+        test_ratio=0.1,
         features=None,  # New parameter to select features
     ):
         """

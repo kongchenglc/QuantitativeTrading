@@ -33,8 +33,8 @@ class StockReturnPredictor:
         self,
         df,
         device,
-        epochs=2000,
-        patience=30,
+        epochs=10000,
+        patience=50,
         lr=0.0001,
         n_steps=10,
         hidden_size=50,
@@ -154,37 +154,60 @@ class StockReturnPredictor:
         return self.l1_weight_decay * l1_norm
 
     def train(self):
-        """Train the model with early stopping"""
+        """Train the model with early stopping based on validation loss"""
         print("Training model...")
 
-        best_loss = float("inf")
+        # Split training data into training and validation sets (10% for validation)
+        val_ratio = 0.1
+        val_size = int(len(self.X_train) * val_ratio)
+
+        X_val, y_val = (
+            self.X_train[-val_size:],
+            self.y_train[-val_size:],
+        )  # Last val_size samples as validation set
+        X_train, y_train = (
+            self.X_train[:-val_size],
+            self.y_train[:-val_size],
+        )  # Remaining samples as training set
+
+        best_val_loss = float("inf")
         patience_counter = 0
 
         for epoch in range(self.epochs):
             self.model.train()
             self.optimizer.zero_grad()
 
-            output = self.model(self.X_train)
-            loss = self.criterion(output, self.y_train.unsqueeze(1))
+            output = self.model(X_train)
+            train_loss = self.criterion(output, y_train.unsqueeze(1))
 
             if self.l1_weight_decay > 0:
-                loss += self.l1_regularization()
+                train_loss += self.l1_regularization()
 
-            loss.backward()
+            train_loss.backward()
             self.optimizer.step()
 
-            if epoch % 10 == 0:
-                print(f"Epoch {epoch+1}/{self.epochs}, Loss: {loss.item():.6f}")
+            # Validation loss calculation
+            self.model.eval()
+            with torch.no_grad():
+                val_output = self.model(X_val)
+                val_loss = self.criterion(val_output, y_val.unsqueeze(1))
 
-            # Early stopping mechanism
-            if loss.item() < best_loss:
-                best_loss = loss.item()
+            if epoch % 10 == 0:
+                print(
+                    f"Epoch {epoch+1}/{self.epochs}, Train Loss: {train_loss.item():.6f}, Val Loss: {val_loss.item():.6f}"
+                )
+
+            # Early stopping based on validation loss
+            if val_loss.item() < best_val_loss:
+                best_val_loss = val_loss.item()
                 patience_counter = 0
             else:
                 patience_counter += 1
 
             if patience_counter >= self.patience:
-                print(f"Early stopping triggered at epoch {epoch+1}")
+                print(
+                    f"Early stopping triggered at epoch {epoch+1}, best validation loss: {best_val_loss:.6f}"
+                )
                 break
 
     def plot_results(self):
@@ -196,21 +219,20 @@ class StockReturnPredictor:
 
             # print("-------------train_pred_return")
             # print(train_pred_return)
-            
+
             predicted_train_return_original = self.result_scaler.inverse_transform(
                 train_pred_return.reshape(-1, 1)
             ).flatten()
 
             # print("-------------predicted_train_return_original")
             # print(predicted_train_return_original)
-            
 
             # Get the actual returns from the dataframe
             actual_train_return = self.y_train.cpu().numpy()
 
             # print("-------------actual_train_return")
             # print(actual_train_return)
-            
+
             # Create a single plot to compare returns
             fig, ax = plt.subplots(figsize=(12, 6))
 
@@ -297,7 +319,7 @@ class StockReturnPredictor:
             print(f"Direction Accuracy: {direction_accuracy:.4f}")
             print(f"R-squared: {r2:.4f}")
 
-            w1, w2, w3, w4 = 0.2, 0.3, 0.3, 0.2
+            w1, w2, w3, w4 = 0.05, 0.4, 0.5, 0.05
             normalized_rmse = 1 / (1 + rmse)
             normalized_mse_mae = 1 / (1 + mse + mae)
             score = (
