@@ -7,8 +7,8 @@ from datetime import datetime
 
 def get_cleaned_data():
     print('Fetching data...')
-    # historical_data = fetch_historial_stock_data()
-    historical_data = pd.read_csv("data/nvidia_historical_data.csv", index_col="Date")
+    historical_data = fetch_historial_stock_data()
+    # historical_data = pd.read_csv("data/nvidia_historical_data.csv", index_col="Date")
     articles = fetch_news()
     macro_data = fetch_macro_data()
     

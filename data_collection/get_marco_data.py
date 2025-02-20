@@ -1,10 +1,13 @@
+import os
 from fredapi import Fred
 import pandas as pd
+from dotenv import load_dotenv
 
 
-def fetch_macro_data(api_key="5363320bd7af2401dafe2914c2c974c8"):
-
-    fred = Fred(api_key)
+def fetch_macro_data():
+    load_dotenv()
+    FRED_API_KEY = os.getenv("FRED_API_KEY")
+    fred = Fred(FRED_API_KEY)
 
     interest_rate = fred.get_series("FEDFUNDS")
     inflation_rate = fred.get_series("CPIAUCSL")
