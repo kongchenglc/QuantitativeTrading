@@ -22,8 +22,8 @@ def objective(trial):
     """Objective function: Use Optuna to automatically optimize LSTM hyperparameters"""
     # Let Optuna choose hyperparameters
     n_steps = trial.suggest_int("n_steps", 10, 90, step=10)
-    hidden_size = trial.suggest_categorical("hidden_size", [10, 20, 30, 50, 70, 100])
-    num_layers = trial.suggest_int("num_layers", 1, 4)
+    hidden_size = trial.suggest_int("hidden_size", 10, 120, step=10)
+    num_layers = trial.suggest_int("num_layers", 1, 3)
     dropout = trial.suggest_float("dropout", 0.0, 0.5)
     lr = trial.suggest_float("lr", 1e-4, 1e-2)
     l1_weight_decay = trial.suggest_float("l1_weight_decay", 0.0, 1e-3)
