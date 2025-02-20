@@ -192,13 +192,18 @@ class StockReturnPredictor:
         with torch.no_grad():
             # Get the predicted returns from the model
             train_pred_return = self.model(self.X_train).cpu().numpy().flatten()
+            print('-------------train_pred_return')
+            print(train_pred_return)
             predicted_train_return_original = self.result_scaler.inverse_transform(
                 train_pred_return.reshape(-1, 1)
             ).flatten()
+            print('-------------predicted_train_return_original')
+            print(predicted_train_return_original)
 
             # Get the actual returns from the dataframe
             actual_train_return = self.df["Return"].iloc[: len(self.X_train)].values
-
+            print('-------------actual_train_return')
+            print(actual_train_return)
             # Create a single plot to compare returns
             fig, ax = plt.subplots(figsize=(12, 6))
 
@@ -254,6 +259,15 @@ class StockReturnPredictor:
             actual_test_return = (
                 self.df["Return"].iloc[len(self.df) - len(self.y_test) :].values
             )
+            
+            print('-------------test_pred_return')
+            print(test_pred_return)
+            
+            print('-------------actual_test_return')
+            print(actual_test_return)
+            
+            print('-------------predicted_test_return_original')
+            print(predicted_test_return_original)
 
             mse = mean_squared_error(actual_test_return, predicted_test_return_original)
             mae = mean_absolute_error(

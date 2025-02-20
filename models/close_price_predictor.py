@@ -84,6 +84,7 @@ class StockPricePredictor:
 
         self.model = None
         self.scaler = MinMaxScaler(feature_range=(0, 1))
+        self.result_scaler = MinMaxScaler(feature_range=(0, 1))
         self.X_train, self.y_train, self.X_test, self.y_test, self.feature_size = (
             self.prepare_data()
         )
@@ -109,11 +110,11 @@ class StockPricePredictor:
         train_data_scaled = self.scaler.transform(train_data[feature_columns].values)
         test_data_scaled = self.scaler.transform(test_data[feature_columns].values)
 
-        self.scaler.fit(train_data["Close"].values.reshape(-1, 1))
-        train_return_scaled = self.scaler.transform(
+        self.result_scaler.fit(train_data["Close"].values.reshape(-1, 1))
+        train_return_scaled = self.result_scaler.transform(
             train_data["Close"].values.reshape(-1, 1)
         )
-        test_return_scaled = self.scaler.transform(
+        test_return_scaled = self.result_scaler.transform(
             test_data["Close"].values.reshape(-1, 1)
         )
 
@@ -196,8 +197,8 @@ class StockPricePredictor:
             predictions = self.model(self.X_train).cpu().numpy()
             actual_values = self.y_train.cpu().numpy()
 
-            predictions = self.scaler.inverse_transform(predictions).flatten()
-            actual_values = self.scaler.inverse_transform(
+            predictions = self.result_scaler.inverse_transform(predictions).flatten()
+            actual_values = self.result_scaler.inverse_transform(
                 actual_values
             ).flatten()
 
@@ -232,8 +233,8 @@ class StockPricePredictor:
             test_pred = self.model(self.X_test).cpu().numpy()
             actual_test_close = self.y_test.cpu().numpy()
 
-            test_pred = self.scaler.inverse_transform(test_pred).flatten()
-            actual_test_close = self.scaler.inverse_transform(
+            test_pred = self.result_scaler.inverse_transform(test_pred).flatten()
+            actual_test_close = self.result_scaler.inverse_transform(
                 actual_test_close
             ).flatten()
 
@@ -303,7 +304,7 @@ class StockPricePredictor:
         self.model.eval()
         with torch.no_grad():
             test_pred = self.model(self.X_test).cpu().numpy().flatten()
-            test_pred = self.scaler.inverse_transform(
+            test_pred = self.result_scaler.inverse_transform(
                 test_pred.reshape(-1, 1)
             ).flatten()
             actual_close = self.df["Close"].iloc[-len(test_pred) :].values
