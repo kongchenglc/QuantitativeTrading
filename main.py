@@ -2,7 +2,6 @@ import torch
 import pandas as pd
 from data_collection.clean_data import get_cleaned_data
 from util.pca import pca
-from models.return_rate_predictor import StockReturnPredictor
 from models.close_price_predictor import StockPricePredictor
 
 
@@ -21,41 +20,32 @@ def main():
         data,
         device,
         features=[
-            "Low",
-            "High",
-            "EMA_50",
-            "Open",
-            "EMA_10",
-            "SMA_10",
-            "SMA_50",
-            "BB_Mid",
-            "Sentiment_Positive",
             "Close",
             "RSI_14",
-            "MACD",
             "Volume",
-            "Signal_Line",
             "Sentiment_Negative",
-            "BB_Lower",
-            "BB_Upper",
+            "MACD",
+            "Open",
+            "Signal_Line",
+            "Sentiment_Positive",
             "Weekday",
+            "EMA_50",
         ],
         **{
-            "n_steps": 39,
-            "lr": 0.001923083680975567,
-            "patience": 22,
-            "num_layers": 1,
-            "hidden_size": 57,
-            "dropout": 0.36156698327237025,
-            "l1_weight_decay": 1.09858177977042e-05,
-            "l2_weight_decay": 2.451001443916554e-05,
+            "n_steps": 6,
+            "lr": 0.000924801815592734,
+            "patience": 18,
+            "num_layers": 3,
+            "hidden_size": 100,
+            "dropout": 0.3490065309761265,
+            "l1_weight_decay": 9.716636735240595e-05,
+            "l2_weight_decay": 8.014956268988414e-05,
         },
     )
 
     predictor.train()
     predictor.plot_results()
     predictor.test()
-    predictor.trade_signal()
 
 
 if __name__ == "__main__":

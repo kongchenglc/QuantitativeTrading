@@ -4,7 +4,6 @@ import pandas as pd
 import numpy as np
 from util.pca import pca
 from models.close_price_predictor import StockPricePredictor
-from models.return_rate_predictor import StockReturnPredictor
 
 torch.manual_seed(42)
 np.random.seed(42)
@@ -26,7 +25,7 @@ def objective(trial):
     lr = trial.suggest_float("lr", 5e-5, 5e-3, log=True)
     patience = trial.suggest_int("patience", 3, 30)
     num_layers = trial.suggest_int("num_layers", 1, 3)
-    hidden_size = trial.suggest_int("hidden_size", 8, 512, log=True)
+    hidden_size = trial.suggest_int("hidden_size", 8, 125, log=True)
     dropout = trial.suggest_float("dropout", 0.0, 0.4)
     l1_weight_decay = trial.suggest_float("l1_weight_decay", 0.0, 1e-4)
     l2_weight_decay = trial.suggest_float("l2_weight_decay", 0.0, 1e-4)
@@ -35,24 +34,16 @@ def objective(trial):
         df,
         device,
         features=[
-            "Low",
-            "High",
-            "EMA_50",
-            "Open",
-            "EMA_10",
-            "SMA_10",
-            "SMA_50",
-            "BB_Mid",
-            "Sentiment_Positive",
             "Close",
             "RSI_14",
-            "MACD",
             "Volume",
-            "Signal_Line",
             "Sentiment_Negative",
-            "BB_Lower",
-            "BB_Upper",
+            "MACD",
+            "Open",
+            "Signal_Line",
+            "Sentiment_Positive",
             "Weekday",
+            "EMA_50",
         ],
         n_steps=n_steps,
         lr=lr,
@@ -72,11 +63,11 @@ def objective(trial):
 def callback(study, trial):
     best_params = study.best_params
     best_value = study.best_value
-    print('------------')
+    print("------------")
     print(f"Best trial: {study.best_trial}")
     print(f"Best Value: {best_value}")
     print(f"Best Parameters: {best_params}")
-    print('------------')
+    print("------------")
 
 
 study = optuna.create_study(direction="maximize")

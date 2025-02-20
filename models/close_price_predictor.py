@@ -229,14 +229,19 @@ class StockPricePredictor:
             ).flatten()
 
         plt.figure(figsize=(12, 6))
-        plt.plot(
+        ax1 = plt.gca()
+        ax1.plot(
             range(len(actual_values)),
             actual_values,
             label="Actual Prices",
             color="blue",
             linewidth=2,
         )
-        plt.plot(
+        ax1.set_xlabel("Time Steps")
+        ax1.set_ylabel("Actual Stock Price", color="blue")
+        ax1.tick_params(axis="y", labelcolor="blue")
+        ax2 = ax1.twinx()
+        ax2.plot(
             range(len(predictions)),
             predictions,
             label="Predicted Prices",
@@ -244,12 +249,14 @@ class StockPricePredictor:
             linestyle="dashed",
             linewidth=2,
         )
+        ax2.set_ylabel("Predicted Stock Price", color="red")
+        ax2.tick_params(axis="y", labelcolor="red")
         plt.xticks(range(0, len(predictions), 1))
-        plt.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
         plt.title("Train: Actual vs Predicted")
-        plt.xlabel("Time Steps")
-        plt.ylabel("Stock Price")
-        plt.legend()
+        plt.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
+        ax1.legend(loc="upper left")
+        ax2.legend(loc="upper right")
+
         plt.show()
 
     def test(self, show_plot=True):
@@ -268,22 +275,39 @@ class StockPricePredictor:
 
             if show_plot:
                 plt.figure(figsize=(12, 6))
-                plt.plot(
-                    test_indices, actual_test_close, label="Actual Close", color="blue"
+
+                ax1 = plt.gca()
+                ax1.plot(
+                    test_indices,
+                    actual_test_close,
+                    label="Actual Close",
+                    color="blue",
+                    linewidth=2,
                 )
-                plt.plot(
+                ax1.set_xlabel("Time Steps")
+                ax1.set_ylabel("Actual Close Price", color="blue")
+                ax1.tick_params(axis="y", labelcolor="blue")
+
+                ax2 = ax1.twinx()
+                ax2.plot(
                     test_indices,
                     test_pred,
                     label="Predicted Close",
                     color="red",
                     linestyle="--",
+                    linewidth=2,
                 )
+                ax2.set_ylabel("Predicted Close Price", color="red")
+                ax2.tick_params(axis="y", labelcolor="red")
+
                 plt.xticks(range(0, len(test_pred), 1))
-                plt.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
+
                 plt.title("Test Results")
-                plt.xlabel("Time Steps")
-                plt.ylabel("Price")
-                plt.legend()
+                plt.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
+
+                ax1.legend(loc="upper left")
+                ax2.legend(loc="upper right")
+
                 plt.show()
 
         mse = mean_squared_error(actual_test_close, test_pred)
@@ -331,13 +355,16 @@ class StockPricePredictor:
 
         print(f"Overall Model Score: {score:.4f}")
 
-        return_rate = max(0, self.trade_signal(show_plot=False))
-        print(f"Return rate: {return_rate:.4f}")
+        return_rate = max(0, self.trade_signal(show_plot=show_plot))
+        backtest_return_rate = max(0, self.backtest(show_plot=show_plot))
+        print(f"Test Return rate: {return_rate:.4f}")
+        print(f"Train Return rate ( Backtest ): {return_rate:.4f}")
         print(f"Overall Score: {score:.4f}")
-        print(f"Return rate * Overall Score: {score * return_rate:.4f}")
-        return score * return_rate
+        print(
+            f"Overall Score * Test Return rate * Train Return rate: {score * return_rate * backtest_return_rate:.4f}"
+        )
+        return score * return_rate * backtest_return_rate
 
-    # WIP
     def trade_signal(self, show_plot=True):
         """Perform trading simulation based on predicted price trends"""
         # Get predictions
@@ -367,12 +394,47 @@ class StockPricePredictor:
         ].diff()  # Current prediction - previous prediction
         trade_df["signal"] = np.where(trade_df["trend"] > 0, 1, -1)
 
+        return self._simulate_trading(data=trade_df, show_plot=show_plot)
+
+    def backtest(self, show_plot=True):
+        """Perform backtest using training data (X_train, y_train) and generate performance metrics"""
+        # 使用训练集进行预测
+        self.model.eval()
+        with torch.no_grad():
+            train_pred = self.model(self.X_train).cpu().numpy().flatten()
+            train_pred = self.result_scaler.inverse_transform(
+                train_pred.reshape(-1, 1)
+            ).flatten()
+            actual_close_train = self.df["Close"].iloc[: len(train_pred)].values
+            actual_open_train = self.df["Open"].iloc[: len(train_pred)].values
+            dates_train = self.df.index[: len(train_pred)]
+
+        # 创建训练集的交易数据框
+        trade_df_train = pd.DataFrame(
+            {
+                "date": dates_train,
+                "close": actual_close_train,
+                "open": actual_open_train,
+                "pred": train_pred,
+            }
+        ).set_index("date")
+
+        # 生成交易信号
+        trade_df_train["trend"] = trade_df_train["pred"].diff()
+        trade_df_train["signal"] = np.where(trade_df_train["trend"] > 0, 1, -1)
+
+        # 使用训练数据进行回测
+        return self._simulate_trading(data=trade_df_train, show_plot=show_plot)
+
+    def _simulate_trading(self, data, show_plot=True):
+        """Simulate trading on given trading dataframe (for either train or test data)"""
+
         # Trading parameters
         initial_capital = 10000.0
         cash = initial_capital
         shares = 0
         position = 0  # 0: no position, 1: long position
-        trade_df = trade_df.assign(
+        trade_df = data.assign(
             action="hold",
             portfolio_value=initial_capital,
             drawdown=0.0,
@@ -443,7 +505,7 @@ class StockPricePredictor:
         win_trades = trade_actions[trade_actions["portfolio_value"].diff() > 0]
         win_rate = len(win_trades) / len(trade_actions) if len(trade_actions) > 0 else 0
 
-        print("\nPerformance Metrics:")
+        print("\nPerformance Metrics (Backtest):")
         print(f"MSE: {mean_squared_error(trade_df['close'], trade_df['pred']):.4f}")
         print(f"MAE: {mean_absolute_error(trade_df['close'], trade_df['pred']):.4f}")
         print(f"Initial Capital: ${initial_capital:.2f}")
