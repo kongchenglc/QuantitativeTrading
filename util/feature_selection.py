@@ -165,3 +165,24 @@ print(best_features_without_plot["Feature"].values)
 
 # Close ==> ['Low' 'High' 'EMA_50' 'Open' 'EMA_10' 'SMA_10' 'SMA_50' 'BB_Lower' 'BB_Upper' 'BB_Mid']
 # Return ==> ['Close','RSI_14','Volume','Sentiment_Negative','MACD','Open','Signal_Line','Sentiment_Positive','Weekday','EMA_50']
+# Merged:
+#     [
+#         "Low",
+#         "High",
+#         "EMA_50",
+#         "Open",
+#         "EMA_10",
+#         "SMA_10",
+#         "SMA_50",
+#         "BB_Mid",
+#         "Sentiment_Positive",
+#         "Close",
+#         "RSI_14",
+#         "MACD",
+#         "Volume",
+#         "Signal_Line",
+#         "Sentiment_Negative",
+#         "BB_Lower",
+#         "BB_Upper",
+#         "Weekday",
+#     ]

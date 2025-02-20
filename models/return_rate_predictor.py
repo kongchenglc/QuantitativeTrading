@@ -319,7 +319,7 @@ class StockReturnPredictor:
             print(f"Direction Accuracy: {direction_accuracy:.4f}")
             print(f"R-squared: {r2:.4f}")
 
-            w1, w2, w3, w4 = 0.05, 0.4, 0.5, 0.05
+            w1, w2, w3, w4 = 0.3, 0.4, 0.1, 0.2
             normalized_rmse = 1 / (1 + rmse)
             normalized_mse_mae = 1 / (1 + mse + mae)
             score = (
@@ -367,4 +367,4 @@ class StockReturnPredictor:
                 plt.tight_layout()
                 plt.show()
 
-            return score
+            return r2

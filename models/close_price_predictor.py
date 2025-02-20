@@ -37,7 +37,7 @@ class StockPricePredictor:
         df,
         device,
         epochs=2000,
-        patience=30,
+        patience=10,
         lr=0.0001,
         n_steps=10,
         hidden_size=50,
@@ -156,37 +156,63 @@ class StockPricePredictor:
         return self.l1_weight_decay * l1_norm
 
     def train(self):
+        """Train the model with early stopping based on validation loss"""
         print("Training model...")
-        best_loss = float("inf")
-        epochs_without_improvement = 0
+
+        # Split training data into training and validation sets (10% for validation)
+        val_ratio = 0.1
+        val_size = int(len(self.X_train) * val_ratio)
+
+        X_val, y_val = (
+            self.X_train[-val_size:],
+            self.y_train[-val_size:],
+        )  # Use the last val_size samples as validation set
+        X_train, y_train = (
+            self.X_train[:-val_size],
+            self.y_train[:-val_size],
+        )  # Use the remaining samples as training set
+
+        best_val_loss = float("inf")
+        patience_counter = 0
 
         for epoch in range(self.epochs):
-            self.model.train()
+            self.model.train()  # Set model to training mode
             self.optimizer.zero_grad()
 
-            output = self.model(self.X_train)
-            loss = self.criterion(output, self.y_train)
+            # Forward pass for training
+            output = self.model(X_train)
+            train_loss = self.criterion(output, y_train)
 
-            # Add L1 regularization to loss
+            # Add L1 regularization if weight decay is applied
             if self.l1_weight_decay > 0:
-                loss += self.l1_regularization()
+                train_loss += self.l1_regularization()
 
-            loss.backward()
+            train_loss.backward()
             self.optimizer.step()
 
+            # Validation loss calculation
+            self.model.eval()  # Set model to evaluation mode
+            with torch.no_grad():
+                val_output = self.model(X_val)
+                val_loss = self.criterion(val_output, y_val)
+
+            # Print losses every 10 epochs
             if epoch % 10 == 0:
-                print(f"Epoch {epoch+1}/{self.epochs}, Loss: {loss.item():.6f}")
-
-            # Early stopping logic
-            if loss.item() < best_loss:
-                best_loss = loss.item()
-                epochs_without_improvement = 0
-            else:
-                epochs_without_improvement += 1
-
-            if epochs_without_improvement >= self.patience:
                 print(
-                    f"Early stopping at epoch {epoch+1} due to no improvement in loss"
+                    f"Epoch {epoch+1}/{self.epochs}, Train Loss: {train_loss.item():.6f}, Val Loss: {val_loss.item():.6f}"
+                )
+
+            # Early stopping based on validation loss
+            if val_loss.item() < best_val_loss:
+                best_val_loss = val_loss.item()
+                patience_counter = 0  # Reset patience counter on improvement
+            else:
+                patience_counter += 1
+
+            # Stop early if no improvement for 'patience' epochs
+            if patience_counter >= self.patience:
+                print(
+                    f"Early stopping triggered at epoch {epoch+1}, best validation loss: {best_val_loss:.6f}"
                 )
                 break
 
@@ -240,40 +266,6 @@ class StockPricePredictor:
 
             test_indices = range(len(test_pred))
 
-            mse = mean_squared_error(actual_test_close, test_pred)
-            mae = mean_absolute_error(actual_test_close, test_pred)
-            rmse = np.sqrt(mse)
-
-            # Direction Accuracy
-            actual_direction = np.sign(np.diff(actual_test_close))  # Calculate actual price direction
-            predicted_direction = np.sign(np.diff(test_pred))  # Calculate predicted price direction
-            direction_accuracy = np.mean(actual_direction == predicted_direction)  # Compare directions
-
-            # R-squared
-            r2 = r2_score(actual_test_close, test_pred)
-
-            print("\nTest Results:")
-            print(f"MSE: {mse:.4f}, MAE: {mae:.4f}, RMSE: {rmse:.4f}")
-            print(f"Direction Accuracy: {direction_accuracy:.4f}")
-            print(f"R-squared: {r2:.4f}")
-
-            # Calculate the overall score with weights (adjust weights as needed)
-            w1, w2, w3, w4 = 0.2, 0.3, 0.3, 0.2  # You can adjust these weights based on your priorities
-
-            # Normalize the errors (inverted since lower error is better)
-            normalized_rmse = 1 / (1 + rmse)  # Normalize RMSE to a scale of [0, 1]
-            normalized_mse_mae = 1 / (1 + mse + mae)  # Normalize MSE and MAE to a scale of [0, 1]
-
-            # Overall score calculation
-            score = (
-                w1 * normalized_rmse
-                + w2 * direction_accuracy
-                + w3 * r2
-                - w4 * normalized_mse_mae
-            )
-
-            print(f"Overall Model Score: {score:.4f}")
-
             if show_plot:
                 plt.figure(figsize=(12, 6))
                 plt.plot(
@@ -294,8 +286,56 @@ class StockPricePredictor:
                 plt.legend()
                 plt.show()
 
-        return score
+        mse = mean_squared_error(actual_test_close, test_pred)
+        mae = mean_absolute_error(actual_test_close, test_pred)
+        rmse = np.sqrt(mse)
 
+        # Direction Accuracy
+        actual_direction = np.sign(
+            np.diff(actual_test_close)
+        )  # Calculate actual price direction
+        predicted_direction = np.sign(
+            np.diff(test_pred)
+        )  # Calculate predicted price direction
+        direction_accuracy = np.mean(
+            actual_direction == predicted_direction
+        )  # Compare directions
+
+        # R-squared
+        r2 = r2_score(actual_test_close, test_pred)
+
+        print("\nTest Results:")
+        print(f"MSE: {mse:.4f}, MAE: {mae:.4f}, RMSE: {rmse:.4f}")
+        print(f"Direction Accuracy: {direction_accuracy:.4f}")
+        print(f"R-squared: {r2:.4f}")
+
+        # Calculate the overall score with weights (adjust weights as needed)
+        w1, w2, w3, w4 = (
+            0.2,
+            0.3,
+            0.3,
+            0.2,
+        )  # You can adjust these weights based on your priorities
+
+        normalized_rmse = 1 / (1 + rmse)
+        normalized_mse = 1 / (1 + mse)
+        normalized_mae = 1 / (1 + mae)
+
+        # Overall score calculation
+        score = (
+            w1 * normalized_rmse
+            + w2 * direction_accuracy
+            + w3 * max(0, r2)
+            + w4 * (normalized_mse + normalized_mae)
+        )
+
+        print(f"Overall Model Score: {score:.4f}")
+
+        return_rate = max(0, self.trade_signal(show_plot=False))
+        print(f"Return rate: {return_rate:.4f}")
+        print(f"Overall Score: {score:.4f}")
+        print(f"Return rate * Overall Score: {score * return_rate:.4f}")
+        return score * return_rate
 
     # WIP
     def trade_signal(self, show_plot=True):
@@ -308,134 +348,179 @@ class StockPricePredictor:
                 test_pred.reshape(-1, 1)
             ).flatten()
             actual_close = self.df["Close"].iloc[-len(test_pred) :].values
+            actual_open = self.df["Open"].iloc[-len(test_pred) :].values
             dates = self.df.index[-len(test_pred) :]
 
         # Create trading dataframe
         trade_df = pd.DataFrame(
-            {"date": dates, "close": actual_close, "pred": test_pred}
+            {
+                "date": dates,
+                "close": actual_close,
+                "open": actual_open,
+                "pred": test_pred,
+            }
         ).set_index("date")
 
-        # Generate trading signals based on trend detection
-        # If predicted price trend is upward (price is increasing), signal buy (1)
-        # If predicted price trend is downward (price is decreasing), signal sell (-1)
-        trade_df["trend"] = (
-            trade_df["pred"].diff().shift(-1)
-        )  # Calculate trend based on diff
+        # Generate trading signals
+        trade_df["trend"] = trade_df[
+            "pred"
+        ].diff()  # Current prediction - previous prediction
         trade_df["signal"] = np.where(trade_df["trend"] > 0, 1, -1)
 
         # Trading parameters
-        initial_cash = 10000.0
-        cash = initial_cash
+        initial_capital = 10000.0
+        cash = initial_capital
         shares = 0
         position = 0  # 0: no position, 1: long position
-        trade_df = trade_df.assign(action="hold", portfolio_value=initial_cash)
+        trade_df = trade_df.assign(
+            action="hold",
+            portfolio_value=initial_capital,
+            drawdown=0.0,
+            trade_price=np.nan,
+        )
 
-        # Simulate trading based on predicted trend
+        # Risk management parameters
+        stop_loss_pct = 0.95  # 5% stop loss
+        position_size = 0.5  # 50% of capital per trade
+
+        # Trading simulation
         for i in range(1, len(trade_df)):
-            current_price = trade_df["close"].iloc[i]
+            current_open = trade_df["open"].iloc[i]
             prev_signal = trade_df["signal"].iloc[i - 1]
 
             # Update portfolio value
+            current_value = cash + shares * trade_df["close"].iloc[i]
             trade_df.iloc[i, trade_df.columns.get_loc("portfolio_value")] = (
-                cash + shares * current_price
+                current_value
             )
 
-            # Execute trading logic based on predicted trend
+            # Stop-loss check
+            if position == 1:
+                entry_price = trade_df.at[trade_df.index[i - 1], "trade_price"]
+                if current_open < entry_price * stop_loss_pct:
+                    prev_signal = -1  # Trigger stop loss
+
+            # Trading logic
             if prev_signal == 1 and position == 0:  # Buy signal
-                max_shares = (cash * 0.99) / current_price  # 1% transaction fee
-                shares = max_shares
-                cash = 0
-                position = 1
-                trade_df.iloc[i, trade_df.columns.get_loc("action")] = "buy"
+                max_shares = (cash * position_size * 0.99) / current_open  # 1% fee
+                if max_shares > 0:
+                    shares += max_shares
+                    cash -= max_shares * current_open
+                    position = 1
+                    trade_df.iloc[i, trade_df.columns.get_loc("action")] = "buy"
+                    trade_df.iloc[i, trade_df.columns.get_loc("trade_price")] = (
+                        current_open
+                    )
 
             elif prev_signal == -1 and position == 1:  # Sell signal
-                cash = shares * current_price * 0.99  # 1% transaction fee
+                sell_value = shares * current_open * 0.99  # 1% fee
+                cash += sell_value
                 shares = 0
                 position = 0
                 trade_df.iloc[i, trade_df.columns.get_loc("action")] = "sell"
+                trade_df.iloc[i, trade_df.columns.get_loc("trade_price")] = current_open
 
-            # Update portfolio value after transaction
-            trade_df.iloc[i, trade_df.columns.get_loc("portfolio_value")] = (
-                cash + shares * current_price
-            )
-
-        # Force liquidation at last day
+        # Force liquidation on last day
         if shares > 0:
-            cash = shares * trade_df["close"].iloc[-1] * 0.99
+            cash += shares * trade_df["open"].iloc[-1] * 0.99
             trade_df.iloc[-1, trade_df.columns.get_loc("portfolio_value")] = cash
             trade_df.iloc[-1, trade_df.columns.get_loc("action")] = "sell"
 
-        # Calculate metrics
-        mse = mean_squared_error(trade_df["close"], trade_df["pred"])
-        mae = mean_absolute_error(trade_df["close"], trade_df["pred"])
-        final_value = trade_df["portfolio_value"].iloc[-1]
-        returns = (final_value - initial_cash) / initial_cash
+        # Performance metrics
+        returns = (cash - initial_capital) / initial_capital
 
-        print("\nComprehensive Evaluation Results:")
-        print(f"MSE: {mse:.4f}, MAE: {mae:.4f}")
-        print(f"Initial Capital: ${initial_cash:.2f}")
-        print(f"Final Portfolio Value: ${final_value:.2f}")
+        # Calculate max drawdown
+        peak_values = trade_df["portfolio_value"].cummax()
+        drawdowns = (peak_values - trade_df["portfolio_value"]) / peak_values
+        max_drawdown = drawdowns.max()
+
+        # Sharpe ratio (assuming 3% risk-free rate)
+        excess_returns = trade_df["portfolio_value"].pct_change().dropna() - 0.03 / 252
+        sharpe_ratio = np.sqrt(252) * excess_returns.mean() / excess_returns.std()
+
+        # Trade statistics
+        trade_actions = trade_df[trade_df["action"].isin(["buy", "sell"])]
+        win_trades = trade_actions[trade_actions["portfolio_value"].diff() > 0]
+        win_rate = len(win_trades) / len(trade_actions) if len(trade_actions) > 0 else 0
+
+        print("\nPerformance Metrics:")
+        print(f"MSE: {mean_squared_error(trade_df['close'], trade_df['pred']):.4f}")
+        print(f"MAE: {mean_absolute_error(trade_df['close'], trade_df['pred']):.4f}")
+        print(f"Initial Capital: ${initial_capital:.2f}")
+        print(f"Final Value: ${cash:.2f}")
         print(f"Return: {returns*100:.2f}%")
+        print(f"Max Drawdown: {max_drawdown*100:.2f}%")
+        print(f"Sharpe Ratio: {sharpe_ratio:.2f}")
+        print(f"Win Rate: {win_rate*100:.2f}%")
+        print(f"Total Trades: {len(trade_actions)}")
 
         # Visualization
         if show_plot:
-            plt.figure(figsize=(14, 10))
+            plt.figure(figsize=(12, 6))
 
             # Price and signals plot
-            ax1 = plt.subplot(2, 1, 1)
-            plt.plot(trade_df["close"], label="Actual Price", zorder=1)
+            ax1 = plt.subplot(3, 1, 1)
+            plt.plot(trade_df["close"], label="Actual Price", alpha=0.7)
             plt.plot(
-                trade_df["pred"], label="Predicted Price", linestyle="--", zorder=1
+                trade_df["pred"], label="Predicted Price", linestyle="--", alpha=0.7
             )
+            buy_signals = trade_df[trade_df["action"] == "buy"]
+            sell_signals = trade_df[trade_df["action"] == "sell"]
             plt.scatter(
-                trade_df[trade_df["action"] == "buy"].index,
-                trade_df[trade_df["action"] == "buy"]["close"],
+                buy_signals.index,
+                buy_signals["open"],
                 marker="^",
                 color="g",
                 s=100,
                 label="Buy",
-                zorder=2,
+                zorder=3,
             )
             plt.scatter(
-                trade_df[trade_df["action"] == "sell"].index,
-                trade_df[trade_df["action"] == "sell"]["close"],
+                sell_signals.index,
+                sell_signals["open"],
                 marker="v",
                 color="r",
                 s=100,
                 label="Sell",
-                zorder=2,
+                zorder=3,
             )
             plt.title("Price and Trading Signals")
             plt.legend()
 
             # Portfolio value plot
-            ax2 = plt.subplot(2, 1, 2, sharex=ax1)
-            plt.plot(
-                trade_df["portfolio_value"], label="Portfolio Value", color="purple"
-            )
-            plt.axhline(
-                initial_cash, color="gray", linestyle="--", label="Initial Capital"
-            )
+            ax2 = plt.subplot(3, 1, 2, sharex=ax1)
+            plt.plot(trade_df["portfolio_value"], label="Portfolio", color="purple")
             plt.fill_between(
                 trade_df.index,
                 trade_df["portfolio_value"],
-                initial_cash,
-                where=(trade_df["portfolio_value"] > initial_cash),
+                initial_capital,
+                where=(trade_df["portfolio_value"] > initial_capital),
                 facecolor="green",
                 alpha=0.3,
+                label="Profit Zone",
             )
             plt.fill_between(
                 trade_df.index,
                 trade_df["portfolio_value"],
-                initial_cash,
-                where=(trade_df["portfolio_value"] < initial_cash),
+                initial_capital,
+                where=(trade_df["portfolio_value"] < initial_capital),
                 facecolor="red",
                 alpha=0.3,
+                label="Loss Zone",
             )
-            plt.title(f"Portfolio Value (Final: ${final_value:.2f})")
+            plt.plot(peak_values, linestyle="--", color="darkgreen", label="Peak Value")
+            plt.title(f"Portfolio Value (Final: ${cash:.2f})")
             plt.legend()
+
+            # Drawdown plot
+            ax3 = plt.subplot(3, 1, 3)
+            plt.fill_between(
+                trade_df.index, drawdowns * 100, 0, facecolor="red", alpha=0.3
+            )
+            plt.title(f"Drawdown (Max: {max_drawdown*100:.2f}%)")
+            plt.ylabel("Drawdown (%)")
 
             plt.tight_layout()
             plt.show()
 
-        return final_value
+        return returns
