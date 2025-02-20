@@ -16,37 +16,37 @@ def main():
 
     # data = get_cleaned_data()
     data = pd.read_csv("data/cleaned_data.csv", index_col="Date")
-    data = pca(data)
+    # data = pca(data)
     predictor = StockReturnPredictor(
         data,
         device,
-        # features=[
-        #     "Low",
-        #     "High",
-        #     "EMA_50",
-        #     "Open",
-        #     "EMA_10",
-        #     "SMA_10",
-        #     "SMA_50",
-        #     "BB_Mid",
-        #     "Sentiment_Positive",
-        #     "Close",
-        #     "RSI_14",
-        #     "MACD",
-        #     "Volume",
-        #     "Signal_Line",
-        #     "Sentiment_Negative",
-        #     "BB_Lower",
-        #     "BB_Upper",
-        # ],
+        features=[
+            "Low",
+            "High",
+            "Open",
+            "Close",
+            "EMA_10",
+            "EMA_50",
+            "SMA_10",
+            "SMA_50",
+            "BB_Mid",
+            "Sentiment_Positive",
+            "RSI_14",
+            "MACD",
+            "Volume",
+            "Signal_Line",
+            "Sentiment_Negative",
+            "BB_Lower",
+            "BB_Upper",
+        ],
         **{
-            "n_steps": 40,
-            "hidden_size": 90,
+            "n_steps": 56,
+            "hidden_size": 10,
             "num_layers": 1,
-            "dropout": 0.4202435333188902,
-            "lr": 0.0030516017985814593,
-            "l1_weight_decay": 0.0004554026305197984,
-            "l2_weight_decay": 2.7946097579790568e-05,
+            "dropout": 0.18586952964756054,
+            "lr": 0.0020896342748212677,
+            "l1_weight_decay": 0.00017979197881835818,
+            "l2_weight_decay": 4.293130104168741e-05,
         }
     )
 

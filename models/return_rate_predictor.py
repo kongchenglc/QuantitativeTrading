@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.metrics import r2_score
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
@@ -62,6 +62,7 @@ class StockReturnPredictor:
         :param features: List of columns to use as features (optional).
         """
         self.df = df.copy()
+        self.df["Return"] = self.df["Return"] * 100
         self.device = device
         self.n_steps = n_steps
         self.hidden_size = hidden_size
@@ -76,7 +77,7 @@ class StockReturnPredictor:
 
         self.model = None
         self.scaler = MinMaxScaler(feature_range=(-1, 1))
-        self.result_scaler = MinMaxScaler(feature_range=(-1, 1))
+        self.result_scaler = StandardScaler()
 
         # Use provided 'features' or default to all columns except 'Date' and 'index'
         if features is None:
@@ -192,18 +193,24 @@ class StockReturnPredictor:
         with torch.no_grad():
             # Get the predicted returns from the model
             train_pred_return = self.model(self.X_train).cpu().numpy().flatten()
-            print('-------------train_pred_return')
-            print(train_pred_return)
+
+            # print("-------------train_pred_return")
+            # print(train_pred_return)
+            
             predicted_train_return_original = self.result_scaler.inverse_transform(
                 train_pred_return.reshape(-1, 1)
             ).flatten()
-            print('-------------predicted_train_return_original')
-            print(predicted_train_return_original)
+
+            # print("-------------predicted_train_return_original")
+            # print(predicted_train_return_original)
+            
 
             # Get the actual returns from the dataframe
-            actual_train_return = self.df["Return"].iloc[: len(self.X_train)].values
-            print('-------------actual_train_return')
-            print(actual_train_return)
+            actual_train_return = self.y_train.cpu().numpy()
+
+            # print("-------------actual_train_return")
+            # print(actual_train_return)
+            
             # Create a single plot to compare returns
             fig, ax = plt.subplots(figsize=(12, 6))
 
@@ -256,18 +263,19 @@ class StockReturnPredictor:
                 test_pred_return.reshape(-1, 1)
             ).flatten()
 
-            actual_test_return = (
-                self.df["Return"].iloc[len(self.df) - len(self.y_test) :].values
-            )
-            
-            print('-------------test_pred_return')
-            print(test_pred_return)
-            
-            print('-------------actual_test_return')
-            print(actual_test_return)
-            
-            print('-------------predicted_test_return_original')
-            print(predicted_test_return_original)
+            actual_test_return = self.y_test.cpu().numpy()
+            # actual_test_return = (
+            #     self.df["Return"].iloc[len(self.df) - len(self.y_test) :].values
+            # )
+
+            # print("-------------test_pred_return")
+            # print(test_pred_return)
+
+            # print("-------------actual_test_return")
+            # print(actual_test_return)
+
+            # print("-------------predicted_test_return_original")
+            # print(predicted_test_return_original)
 
             mse = mean_squared_error(actual_test_return, predicted_test_return_original)
             mae = mean_absolute_error(

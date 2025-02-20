@@ -16,13 +16,13 @@ else:
     print("MPS device is not available, defaulting to CPU.")
 
 df = pd.read_csv("data/cleaned_data.csv")
-df = pca(df)
+# df = pca(df)
 
 
 def objective(trial):
     """Objective function: Use Optuna to automatically optimize LSTM hyperparameters"""
     # Let Optuna choose hyperparameters
-    n_steps = trial.suggest_int("n_steps", 10, 90, step=10)
+    n_steps = trial.suggest_int("n_steps", 1, 90, step=5)
     hidden_size = trial.suggest_int("hidden_size", 10, 120, step=10)
     num_layers = trial.suggest_int("num_layers", 1, 3)
     dropout = trial.suggest_float("dropout", 0.0, 0.5)
@@ -33,25 +33,25 @@ def objective(trial):
     model = StockReturnPredictor(
         df,
         device,
-        # features=[
-        #     "Low",
-        #     "High",
-        #     "EMA_50",
-        #     "Open",
-        #     "EMA_10",
-        #     "SMA_10",
-        #     "SMA_50",
-        #     "BB_Mid",
-        #     "Sentiment_Positive",
-        #     "Close",
-        #     "RSI_14",
-        #     "MACD",
-        #     "Volume",
-        #     "Signal_Line",
-        #     "Sentiment_Negative",
-        #     "BB_Lower",
-        #     "BB_Upper",
-        # ],
+        features=[
+            "Low",
+            "High",
+            "Open",
+            "Close",
+            "EMA_10",
+            "EMA_50",
+            "SMA_10",
+            "SMA_50",
+            "BB_Mid",
+            "Sentiment_Positive",
+            "RSI_14",
+            "MACD",
+            "Volume",
+            "Signal_Line",
+            "Sentiment_Negative",
+            "BB_Lower",
+            "BB_Upper",
+        ],
         n_steps=n_steps,
         hidden_size=hidden_size,
         num_layers=num_layers,
