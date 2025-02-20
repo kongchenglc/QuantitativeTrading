@@ -1,7 +1,7 @@
 import torch
 import pandas as pd
 from data_collection.clean_data import get_cleaned_data
-
+from util.pca import pca
 from models.close_price_predictor import StockPricePredictor
 
 
@@ -15,36 +15,37 @@ def main():
 
     # data = get_cleaned_data()
     data = pd.read_csv("data/cleaned_data.csv", index_col="Date")
-
+    data = pca(data)
     predictor = StockPricePredictor(
         data,
         device,
-        features=[
-            "Low",
-            "High",
-            "EMA_50",
-            "Open",
-            "EMA_10",
-            "SMA_10",
-            "SMA_50",
-            "BB_Mid",
-            "Sentiment_Positive",
-            "Close",
-            "RSI_14",
-            "MACD",
-            "Volume",
-            "Signal_Line",
-            "Sentiment_Negative",
-            "BB_Lower",
-            "BB_Upper",
-        ],
+        # features=[
+        #     "Low",
+        #     "High",
+        #     "EMA_50",
+        #     "Open",
+        #     "EMA_10",
+        #     "SMA_10",
+        #     "SMA_50",
+        #     "BB_Mid",
+        #     "Sentiment_Positive",
+        #     "Close",
+        #     "RSI_14",
+        #     "MACD",
+        #     "Volume",
+        #     "Signal_Line",
+        #     "Sentiment_Negative",
+        #     "BB_Lower",
+        #     "BB_Upper",
+        # ],
         **{
-            "n_steps": 10,
-            "hidden_size": 50,
+            "n_steps": 30,
+            "hidden_size": 100,
             "num_layers": 1,
-            "dropout": 0.21242266970004728,
-            "lr": 0.004966601783196961,
-            "l2_weight_decay": 0.0001572412821751865,
+            "dropout": 0.4667700020967636,
+            "lr": 0.0036156504995540923,
+            "l1_weight_decay": 0.0,
+            "l2_weight_decay": 2.134486544547339e-06,
         }
     )
 

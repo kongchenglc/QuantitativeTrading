@@ -43,6 +43,7 @@ class StockPricePredictor:
         num_layers=3,
         dropout=0,
         l2_weight_decay=0,
+        l1_weight_decay=0,  # New parameter for L1 regularization
         test_ratio=0.2,
         features=None,  # New parameter to select features
     ):
@@ -59,6 +60,7 @@ class StockPricePredictor:
         :param test_ratio: The proportion of data to reserve for testing.
         :param patience: Patience for early stopping, in terms of epochs without improvement.
         :param l2_weight_decay: Strength of L2 regularization.
+        :param l1_weight_decay: Strength of L1 regularization.
         :param features: List of features to use for the model, if None, use all columns except 'Date' and 'index'
         """
         self.df = df.copy()
@@ -72,6 +74,7 @@ class StockPricePredictor:
         self.patience = patience
         self.dropout = dropout
         self.l2_weight_decay = l2_weight_decay
+        self.l1_weight_decay = l1_weight_decay  # Store L1 weight decay
         self.features = (
             features
             if features is not None
@@ -146,6 +149,11 @@ class StockPricePredictor:
             self.model.parameters(), lr=self.lr, weight_decay=self.l2_weight_decay
         )  # L2 Regularization
 
+    def l1_regularization(self):
+        """Calculate L1 regularization term"""
+        l1_norm = sum(p.abs().sum() for p in self.model.parameters())
+        return self.l1_weight_decay * l1_norm
+
     def train(self):
         print("Training model...")
         best_loss = float("inf")
@@ -157,6 +165,10 @@ class StockPricePredictor:
 
             output = self.model(self.X_train)
             loss = self.criterion(output, self.y_train)
+
+            # Add L1 regularization to loss
+            if self.l1_weight_decay > 0:
+                loss += self.l1_regularization()
 
             loss.backward()
             self.optimizer.step()
