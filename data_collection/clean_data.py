@@ -68,9 +68,6 @@ def get_cleaned_data():
     full_date_range = pd.date_range(start=merged_data.index.min(), end=merged_data.index.max(), freq='D')
     merged_data = merged_data.reindex(full_date_range)
     merged_data = merged_data.ffill()
-    
-    merged_data["Return"] = merged_data["Close"].pct_change()
-    merged_data = merged_data[1:]
 
     merged_data.index.name = "Date"
     merged_data.to_csv("data/cleaned_data.csv", index=True)

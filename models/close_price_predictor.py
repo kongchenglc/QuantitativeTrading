@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error, mean_absolute_error
@@ -34,7 +35,7 @@ class StockPricePredictor:
         self,
         df,
         device,
-        epochs=1500,
+        epochs=3000,
         patience=30,
         lr=0.0001,
         n_steps=10,
@@ -42,7 +43,7 @@ class StockPricePredictor:
         num_layers=3,
         dropout=0,
         l2_weight_decay=0,
-        test_ratio=0.1,
+        test_ratio=0.2,
         features=None,  # New parameter to select features
     ):
         """
@@ -176,8 +177,41 @@ class StockPricePredictor:
                 )
                 break
 
-    def backtest(self, show_plot=True):
-        """Perform backtesting on test set"""
+    def plot_results(self):
+        """Plot training results"""
+        self.model.eval()
+        with torch.no_grad():
+            train_pred = (
+                self.model(self.X_train).cpu().numpy().flatten()
+            )  # Move to CPU for plotting
+
+            # Inverse scaling
+            train_pred_original = self.result_scaler.inverse_transform(
+                train_pred.reshape(-1, 1)
+            ).flatten()
+            actual_train_close = self.df["Close"].iloc[: len(self.X_train)].values
+
+            plt.figure(figsize=(12, 6))
+            plt.plot(actual_train_close, label="Actual Close", color="blue")
+            plt.plot(
+                train_pred_original,
+                label="Predicted Close",
+                color="orange",
+                linestyle="--",
+            )
+            # Add grid, display ticks by day
+            plt.xticks(
+                range(0, len(train_pred_original), 1)
+            )  # Display tick for each day
+            plt.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
+            plt.title("Training Results")
+            plt.xlabel("Time Steps")
+            plt.ylabel("Price")
+            plt.legend()
+            plt.show()
+
+    def test(self, show_plot=True):
+        """Perform testing on test set"""
         self.model.eval()
         with torch.no_grad():
             test_pred = (
@@ -218,71 +252,175 @@ class StockPricePredictor:
 
         return rmse
 
-    def plot_results(self):
-        """Plot training results"""
+    def evaluate(self, show_plot=True):
         self.model.eval()
         with torch.no_grad():
-            train_pred = (
-                self.model(self.X_train).cpu().numpy().flatten()
-            )  # Move to CPU for plotting
-
-            # Inverse scaling
-            train_pred_original = self.result_scaler.inverse_transform(
-                train_pred.reshape(-1, 1)
+            # Predict on the validation set
+            valid_pred = self.model(self.X_test).cpu().numpy().flatten()
+            valid_pred = self.result_scaler.inverse_transform(
+                valid_pred.reshape(-1, 1)
             ).flatten()
-            actual_train_close = self.df["Close"].iloc[: len(self.X_train)].values
+            # Assume the actual validation values are in the last segment of df["Close"]
+            actual_valid_close = self.df["Close"].iloc[-len(valid_pred) :].values
 
+        # Calculate the RMSE for the validation set
+        valid_rmse = np.sqrt(mean_squared_error(actual_valid_close, valid_pred))
+
+        print("Validation RMSE: {:.4f}".format(valid_rmse))
+
+        if show_plot:
             plt.figure(figsize=(12, 6))
-            plt.plot(actual_train_close, label="Actual Close", color="blue")
+            plt.plot(actual_valid_close, label="Validation Actual", color="blue")
             plt.plot(
-                train_pred_original,
-                label="Predicted Close",
-                color="orange",
-                linestyle="--",
+                valid_pred, label="Validation Predicted", color="red", linestyle="--"
             )
-            # Add grid, display ticks by day
-            plt.xticks(
-                range(0, len(train_pred_original), 1)
-            )  # Display tick for each day
-            plt.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
-            plt.title("Training Results")
+            plt.title("Validation Predictions")
             plt.xlabel("Time Steps")
             plt.ylabel("Price")
             plt.legend()
             plt.show()
 
-    def predict_next_day(self):
-        """Predict the next day's return and closing price"""
-        self.model.eval()  # Set model to evaluation mode
-        last_n_days = self.df[self.features].values[-self.n_steps :]
-        last_close_price = self.df["Close"].values[-1]  # Get the last closing price
+        return valid_rmse
 
-        # Normalize input data
-        last_n_days_scaled = self.scaler.transform(last_n_days)
-        input_tensor = (
-            torch.tensor(last_n_days_scaled, dtype=torch.float32)
-            .unsqueeze(0)  # Add batch dimension
-            .to(self.device)
-        )
-
+    # WIP
+    def trade_signal(self, show_plot=True):
+        """Perform trading simulation based on predicted price trends"""
+        # Get predictions
+        self.model.eval()
         with torch.no_grad():
-            predicted_close_price_scaled = self.model(
-                input_tensor
-            ).item()  # Predict normalized return
+            test_pred = self.model(self.X_test).cpu().numpy().flatten()
+            test_pred = self.result_scaler.inverse_transform(
+                test_pred.reshape(-1, 1)
+            ).flatten()
+            actual_close = self.df["Close"].iloc[-len(test_pred) :].values
+            dates = self.df.index[-len(test_pred) :]
 
-        # Inverse transform return
-        predicted_close_price = self.result_scaler.inverse_transform(
-            [[predicted_close_price_scaled]]
-        )[0][0]
+        # Create trading dataframe
+        trade_df = pd.DataFrame(
+            {"date": dates, "close": actual_close, "pred": test_pred}
+        ).set_index("date")
 
-        # Calculate predicted next-day close price
-        predicted_return = (predicted_close_price - last_close_price) / last_close_price
+        # Generate trading signals based on trend detection
+        # If predicted price trend is upward (price is increasing), signal buy (1)
+        # If predicted price trend is downward (price is decreasing), signal sell (-1)
+        trade_df["trend"] = (
+            trade_df["pred"].diff().shift(-1)
+        )  # Calculate trend based on diff
+        trade_df["signal"] = np.where(trade_df["trend"] > 0, 1, -1)
 
-        print(f"Predicted Next Day Close Price: {predicted_close_price:.2f}")
-        print(f"Predicted Next Day Return: {predicted_return * 100:.2f}%")
+        # Trading parameters
+        initial_cash = 10000.0
+        cash = initial_cash
+        shares = 0
+        position = 0  # 0: no position, 1: long position
+        trade_df = trade_df.assign(action="hold", portfolio_value=initial_cash)
 
-        return predicted_close_price, predicted_return
+        # Simulate trading based on predicted trend
+        for i in range(1, len(trade_df)):
+            current_price = trade_df["close"].iloc[i]
+            prev_signal = trade_df["signal"].iloc[i - 1]
 
-    def evaluate(self):
-        objective_score = 0 # Todo: Maximize Return and similarity. Minimise objective_score
-        return objective_score
+            # Update portfolio value
+            trade_df.iloc[i, trade_df.columns.get_loc("portfolio_value")] = (
+                cash + shares * current_price
+            )
+
+            # Execute trading logic based on predicted trend
+            if prev_signal == 1 and position == 0:  # Buy signal
+                max_shares = (cash * 0.99) / current_price  # 1% transaction fee
+                shares = max_shares
+                cash = 0
+                position = 1
+                trade_df.iloc[i, trade_df.columns.get_loc("action")] = "buy"
+
+            elif prev_signal == -1 and position == 1:  # Sell signal
+                cash = shares * current_price * 0.99  # 1% transaction fee
+                shares = 0
+                position = 0
+                trade_df.iloc[i, trade_df.columns.get_loc("action")] = "sell"
+
+            # Update portfolio value after transaction
+            trade_df.iloc[i, trade_df.columns.get_loc("portfolio_value")] = (
+                cash + shares * current_price
+            )
+
+        # Force liquidation at last day
+        if shares > 0:
+            cash = shares * trade_df["close"].iloc[-1] * 0.99
+            trade_df.iloc[-1, trade_df.columns.get_loc("portfolio_value")] = cash
+            trade_df.iloc[-1, trade_df.columns.get_loc("action")] = "sell"
+
+        # Calculate metrics
+        mse = mean_squared_error(trade_df["close"], trade_df["pred"])
+        mae = mean_absolute_error(trade_df["close"], trade_df["pred"])
+        final_value = trade_df["portfolio_value"].iloc[-1]
+        returns = (final_value - initial_cash) / initial_cash
+
+        print("\nComprehensive Evaluation Results:")
+        print(f"MSE: {mse:.4f}, MAE: {mae:.4f}")
+        print(f"Initial Capital: ${initial_cash:.2f}")
+        print(f"Final Portfolio Value: ${final_value:.2f}")
+        print(f"Return: {returns*100:.2f}%")
+
+        # Visualization
+        if show_plot:
+            plt.figure(figsize=(14, 10))
+
+            # Price and signals plot
+            ax1 = plt.subplot(2, 1, 1)
+            plt.plot(trade_df["close"], label="Actual Price", zorder=1)
+            plt.plot(
+                trade_df["pred"], label="Predicted Price", linestyle="--", zorder=1
+            )
+            plt.scatter(
+                trade_df[trade_df["action"] == "buy"].index,
+                trade_df[trade_df["action"] == "buy"]["close"],
+                marker="^",
+                color="g",
+                s=100,
+                label="Buy",
+                zorder=2,
+            )
+            plt.scatter(
+                trade_df[trade_df["action"] == "sell"].index,
+                trade_df[trade_df["action"] == "sell"]["close"],
+                marker="v",
+                color="r",
+                s=100,
+                label="Sell",
+                zorder=2,
+            )
+            plt.title("Price and Trading Signals")
+            plt.legend()
+
+            # Portfolio value plot
+            ax2 = plt.subplot(2, 1, 2, sharex=ax1)
+            plt.plot(
+                trade_df["portfolio_value"], label="Portfolio Value", color="purple"
+            )
+            plt.axhline(
+                initial_cash, color="gray", linestyle="--", label="Initial Capital"
+            )
+            plt.fill_between(
+                trade_df.index,
+                trade_df["portfolio_value"],
+                initial_cash,
+                where=(trade_df["portfolio_value"] > initial_cash),
+                facecolor="green",
+                alpha=0.3,
+            )
+            plt.fill_between(
+                trade_df.index,
+                trade_df["portfolio_value"],
+                initial_cash,
+                where=(trade_df["portfolio_value"] < initial_cash),
+                facecolor="red",
+                alpha=0.3,
+            )
+            plt.title(f"Portfolio Value (Final: ${final_value:.2f})")
+            plt.legend()
+
+            plt.tight_layout()
+            plt.show()
+
+        return final_value

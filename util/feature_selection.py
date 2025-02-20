@@ -153,7 +153,7 @@ def perform_feature_selection(data_path, target, n_top_features=10, show_plot=Tr
     return best_features
 
 
-target = "Return"
+target = "Close"
 data_path = "data/cleaned_data.csv"
 n_top_features = 10
 

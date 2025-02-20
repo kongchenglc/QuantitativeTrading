@@ -3,7 +3,6 @@ import pandas as pd
 from data_collection.clean_data import get_cleaned_data
 
 from models.close_price_predictor import StockPricePredictor
-from models.return_rate_predictor import StockReturnPredictor
 
 
 def main():
@@ -40,44 +39,19 @@ def main():
             "BB_Upper",
         ],
         **{
-            "n_steps": 70,
-            "hidden_size": 30,
+            "n_steps": 10,
+            "hidden_size": 50,
             "num_layers": 1,
-            "dropout": 0.09831267302180555,
-            "lr": 0.004798262999407178,
-            "l2_weight_decay": 8.850780694683764e-07,
+            "dropout": 0.21242266970004728,
+            "lr": 0.004966601783196961,
+            "l2_weight_decay": 0.0001572412821751865,
         }
     )
 
-    # predictor = StockReturnPredictor(
-    #     data,
-    #     device,
-    #     features=[
-    #         "Close",
-    #         "RSI_14",
-    #         "Volume",
-    #         "Open",
-    #         "MACD",
-    #         "Signal_Line",
-    #         "BB_Lower",
-    #         "Sentiment_Negative",
-    #         "Sentiment_Neutral",
-    #         "BB_Upper",
-    #     ],
-    #     **{
-    #         "n_steps": 90,
-    #         "hidden_size": 10,
-    #         "num_layers": 3,
-    #         "dropout": 0.27473146300173074,
-    #         "lr": 0.0025990817107881307,
-    #         "l2_weight_decay": 6.546354488797982e-05,
-    #     }
-    # )
-
     predictor.train()
     predictor.plot_results()
-    predictor.backtest()
-    predictor.predict_next_day()
+    predictor.test()
+    predictor.trade_signal()
 
 
 if __name__ == "__main__":
