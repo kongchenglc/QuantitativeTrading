@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 from util.pca import pca
 from models.close_price_predictor import StockPricePredictor
+from models.return_rate_predictor import StockReturnPredictor
 
 torch.manual_seed(42)
 np.random.seed(42)
@@ -15,7 +16,7 @@ else:
     print("MPS device is not available, defaulting to CPU.")
 
 df = pd.read_csv("data/cleaned_data.csv")
-df = pca(df)
+# df = pca(df)
 
 
 def objective(trial):
@@ -29,7 +30,7 @@ def objective(trial):
     l1_weight_decay = trial.suggest_float("l1_weight_decay", 0.0, 1e-3)
     l2_weight_decay = trial.suggest_float("l2_weight_decay", 0.0, 1e-3)
 
-    model = StockPricePredictor(
+    model = StockReturnPredictor(
         df,
         device,
         # features=[
