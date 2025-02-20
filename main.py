@@ -16,29 +16,29 @@ def main():
 
     # data = get_cleaned_data()
     data = pd.read_csv("data/cleaned_data.csv", index_col="Date")
-    # data = pca(data)
+    data = pca(data)
     predictor = StockReturnPredictor(
         data,
         device,
-        features=[
-            "Low",
-            "High",
-            "EMA_50",
-            "Open",
-            "EMA_10",
-            "SMA_10",
-            "SMA_50",
-            "BB_Mid",
-            "Sentiment_Positive",
-            "Close",
-            "RSI_14",
-            "MACD",
-            "Volume",
-            "Signal_Line",
-            "Sentiment_Negative",
-            "BB_Lower",
-            "BB_Upper",
-        ],
+        # features=[
+        #     "Low",
+        #     "High",
+        #     "EMA_50",
+        #     "Open",
+        #     "EMA_10",
+        #     "SMA_10",
+        #     "SMA_50",
+        #     "BB_Mid",
+        #     "Sentiment_Positive",
+        #     "Close",
+        #     "RSI_14",
+        #     "MACD",
+        #     "Volume",
+        #     "Signal_Line",
+        #     "Sentiment_Negative",
+        #     "BB_Lower",
+        #     "BB_Upper",
+        # ],
         **{
             "n_steps": 40,
             "hidden_size": 90,

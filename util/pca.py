@@ -3,7 +3,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
 
-def pca(df, target="Close"):
+def pca(df, target="Return"):
     print("PCAing...")
     if target not in df.columns:
         raise ValueError(f"The input DataFrame must contain {target} columns.")

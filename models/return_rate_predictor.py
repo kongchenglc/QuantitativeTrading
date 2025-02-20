@@ -48,7 +48,7 @@ class StockReturnPredictor:
         """
         Initialize the stock predictor model with provided hyperparameters.
 
-        :param df: Input DataFrame with stock data (requires 'Close' column).
+        :param df: Input DataFrame with stock data.
         :param device: Device (either "mps" or "cpu").
         :param n_steps: Number of previous time steps to use for prediction.
         :param hidden_size: Number of hidden units in the LSTM layer.
@@ -187,58 +187,59 @@ class StockReturnPredictor:
                 break
 
     def plot_results(self):
-        """Plot training results with predicted and actual close prices and returns"""
+        """Plot training results with predicted and actual returns"""
         self.model.eval()
         with torch.no_grad():
+            # Get the predicted returns from the model
             train_pred_return = self.model(self.X_train).cpu().numpy().flatten()
             predicted_train_return_original = self.result_scaler.inverse_transform(
                 train_pred_return.reshape(-1, 1)
             ).flatten()
 
-            actual_train_close = self.df["Close"].iloc[: len(self.X_train)].values
+            # Get the actual returns from the dataframe
             actual_train_return = self.df["Return"].iloc[: len(self.X_train)].values
 
-            predicted_train_close = actual_train_close[:-1] * (
-                1 + predicted_train_return_original[1:]
+            # Create a single plot to compare returns
+            fig, ax = plt.subplots(figsize=(12, 6))
+
+            # Plot actual returns and predicted returns
+            ax.plot(
+                actual_train_return,
+                label="Actual Return",
+                color="blue",
+                linestyle="-",
+                linewidth=2,
             )
-
-            # Create subplots for returns and price
-            fig, axs = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
-
-            # Plot actual vs. predicted returns on the top subplot
-            axs[0].plot(actual_train_return, label="Actual Return", color="blue")
-            axs[0].plot(
+            ax.plot(
                 predicted_train_return_original,
                 label="Predicted Return",
                 color="red",
                 linestyle="--",
+                linewidth=2,
             )
-            axs[0].axhline(
+
+            # Add a baseline where the return equals zero
+            ax.axhline(
                 0,
                 color="black",
                 linestyle="-",
                 linewidth=1,
                 label="Baseline (Return = 0)",
             )
-            axs[0].set_title("Training Results: Actual vs Predicted Returns")
-            axs[0].set_ylabel("Return")
-            axs[0].legend(loc="upper left")
 
-            # Plot actual vs. predicted close prices on the bottom subplot
-            axs[1].plot(actual_train_close, label="Actual Close", color="blue")
-            axs[1].plot(
-                np.concatenate(([actual_train_close[0]], predicted_train_close)),
-                label="Predicted Close",
-                color="orange",
-                linestyle="--",
-            )
-            axs[1].set_title("Training Results: Actual vs Predicted Close Prices")
-            axs[1].set_xlabel("Time Steps")
-            axs[1].set_ylabel("Price")
-            axs[1].legend(loc="upper left")
+            # Set title and labels for the axes
+            ax.set_title("Training Results: Actual vs Predicted Returns", fontsize=16)
+            ax.set_xlabel("Time Steps", fontsize=14)
+            ax.set_ylabel("Return", fontsize=14)
+            ax.grid(True)  # Add gridlines to improve readability
 
-            # Show the plots
+            # Add the legend
+            ax.legend(loc="upper left", fontsize=12)
+
+            # Adjust layout to avoid overlapping of elements
             plt.tight_layout()
+
+            # Display the plot
             plt.show()
 
     def test(self, show_plot=True):
@@ -323,35 +324,3 @@ class StockReturnPredictor:
                 plt.show()
 
             return score
-
-    def predict_next_day(self):
-        """Predict the next day's stock return and closing price"""
-        self.model.eval()  # Set model to evaluation mode
-        last_n_days = self.df[self.features].values[-self.n_steps :]
-        last_close_price = self.df["Close"].values[-1]  # Get the last closing price
-
-        # Normalize input data
-        last_n_days_scaled = self.scaler.transform(last_n_days)
-        input_tensor = (
-            torch.tensor(last_n_days_scaled, dtype=torch.float32)
-            .unsqueeze(0)  # Add batch dimension
-            .to(self.device)
-        )
-
-        with torch.no_grad():
-            predicted_return_scaled = self.model(
-                input_tensor
-            ).item()  # Predict normalized return
-
-        # Inverse transform return
-        predicted_return = self.result_scaler.inverse_transform(
-            [[predicted_return_scaled]]
-        )[0][0]
-
-        # Calculate predicted closing price
-        predicted_close_price = last_close_price * (1 + predicted_return)
-
-        print(f"Predicted Next Day Return: {predicted_return * 100:.2f}%")
-        print(f"Predicted Next Day Close Price: {predicted_close_price:.2f}")
-
-        return predicted_return, predicted_close_price

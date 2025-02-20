@@ -16,7 +16,7 @@ else:
     print("MPS device is not available, defaulting to CPU.")
 
 df = pd.read_csv("data/cleaned_data.csv")
-# df = pca(df)
+df = pca(df)
 
 
 def objective(trial):
