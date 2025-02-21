@@ -6,19 +6,12 @@ from models.close_price_predictor import StockPricePredictor
 
 
 def main():
-    # Mac GPU acceleration
-    if torch.backends.mps.is_available():
-        device = torch.device("mps")
-    else:
-        device = torch.device("cpu")
-        print("MPS device is not available, defaulting to CPU.")
 
     # data = get_cleaned_data()
     data = pd.read_csv("data/cleaned_data.csv", index_col="Date")
     # data = pca(data)
     predictor = StockPricePredictor(
         data,
-        device,
         features=[
             "Close",
             "RSI_14",

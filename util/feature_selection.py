@@ -19,7 +19,9 @@ def load_data(data_path, target):
 
 # Function to calculate XGBoost feature importance
 def calculate_xgb_importance(X_train, y_train, X):
-    xgb_model = xgb.XGBRegressor(objective="reg:squarederror", random_state=42)
+    xgb_model = xgb.XGBRegressor(
+        objective="reg:squarederror",
+    )
     xgb_model.fit(X_train, y_train)
 
     xgb_importance = xgb_model.feature_importances_
@@ -61,7 +63,7 @@ def calculate_shap_importance(xgb_model, X_test, show_plot=True):
 
 # Function to calculate RFE (Recursive Feature Elimination) importance
 def calculate_rfe_importance(X_train, y_train, n_features_to_select=10):
-    rfe_model = RandomForestRegressor(random_state=42)
+    rfe_model = RandomForestRegressor()
     rfe_selector = RFE(rfe_model, n_features_to_select=n_features_to_select)
     rfe_selector.fit(X_train, y_train)
 
@@ -126,7 +128,9 @@ def perform_feature_selection(data_path, target, n_top_features=10, show_plot=Tr
 
     # Split into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
+        X,
+        y,
+        test_size=0.2,
     )
 
     # 2️⃣ Calculate Feature Importance using XGBoost

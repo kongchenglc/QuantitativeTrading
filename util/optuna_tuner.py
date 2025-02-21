@@ -1,25 +1,24 @@
 import torch
 import optuna
+import datetime
 import pandas as pd
 import numpy as np
 from util.pca import pca
 from models.close_price_predictor import StockPricePredictor
 
-torch.manual_seed(42)
-np.random.seed(42)
-
-if torch.backends.mps.is_available():
-    device = torch.device("mps")
-else:
-    device = torch.device("cpu")
-    print("MPS device is not available, defaulting to CPU.")
 
 df = pd.read_csv("data/cleaned_data.csv")
 # df = pca(df)
 
+start_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+best_score = -float("inf")
+
 
 def objective(trial):
     """Objective function: Use Optuna to automatically optimize LSTM hyperparameters"""
+
+    global best_score
+
     # Let Optuna choose hyperparameters
     n_steps = trial.suggest_int("n_steps", 1, 60)
     lr = trial.suggest_float("lr", 5e-5, 5e-3, log=True)
@@ -30,10 +29,16 @@ def objective(trial):
     l1_weight_decay = trial.suggest_float("l1_weight_decay", 0.0, 1e-4)
     l2_weight_decay = trial.suggest_float("l2_weight_decay", 0.0, 1e-4)
 
-    model = StockPricePredictor(
-        df,
-        device,
-        features=[
+    hyperparameters = {
+        "n_steps": n_steps,
+        "lr": lr,
+        "patience": patience,
+        "num_layers": num_layers,
+        "hidden_size": hidden_size,
+        "dropout": dropout,
+        "l1_weight_decay": l1_weight_decay,
+        "l2_weight_decay": l2_weight_decay,
+        "features": [
             "Close",
             "RSI_14",
             "Volume",
@@ -45,19 +50,31 @@ def objective(trial):
             "Weekday",
             "EMA_50",
         ],
-        n_steps=n_steps,
-        lr=lr,
-        patience=patience,
-        num_layers=num_layers,
-        hidden_size=hidden_size,
-        dropout=dropout,
-        l1_weight_decay=l1_weight_decay,
-        l2_weight_decay=l2_weight_decay,
+    }
+
+    model = StockPricePredictor(
+        df,
+        **hyperparameters,
     )
 
     model.train()
 
-    return model.test(show_plot=False)  # The objective
+    score = model.test(show_plot=False)  # The objective
+
+    if score > best_score:
+        best_score = score
+        best_model_path = f"./models/best_model/best_model_{start_time}.pth"
+        torch.save(
+            {
+                "model_state_dict": model.model.state_dict(),
+                "hyperparameters": hyperparameters,
+            },
+            best_model_path,
+        )
+        print(f"New best model found! Score: {score}")
+        print(f"Saving model to {best_model_path}")
+
+    return score
 
 
 def callback(study, trial):

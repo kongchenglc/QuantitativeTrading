@@ -35,8 +35,7 @@ class StockPricePredictor:
     def __init__(
         self,
         df,
-        device,
-        epochs=2000,
+        epochs=5000,
         patience=10,
         lr=0.0001,
         n_steps=10,
@@ -52,7 +51,6 @@ class StockPricePredictor:
         Initialize the stock predictor model with provided hyperparameters.
 
         :param df: Input DataFrame with stock data (requires 'Close' column).
-        :param device: Device (either "mps" or "cpu").
         :param n_steps: Number of previous time steps to use for prediction.
         :param hidden_size: Number of hidden units in the LSTM layer.
         :param num_layers: Number of layers in the LSTM.
@@ -65,7 +63,11 @@ class StockPricePredictor:
         :param features: List of features to use for the model, if None, use all columns except 'Date' and 'index'
         """
         self.df = df.copy()
-        self.device = device  # Store the device for later use
+        self.device = torch.device(
+            "cuda"
+            if torch.cuda.is_available()
+            else "mps" if torch.backends.mps.is_available() else "cpu"
+        )
         self.n_steps = n_steps
         self.hidden_size = hidden_size
         self.num_layers = num_layers
@@ -358,7 +360,7 @@ class StockPricePredictor:
         return_rate = max(0, self.trade_signal(show_plot=show_plot))
         backtest_return_rate = max(0, self.backtest(show_plot=show_plot))
         print(f"Test Return rate: {return_rate:.4f}")
-        print(f"Train Return rate ( Backtest ): {return_rate:.4f}")
+        print(f"Train Return rate: {backtest_return_rate:.4f}")
         print(f"Overall Score: {score:.4f}")
         print(
             f"Overall Score * Test Return rate * Train Return rate: {score * return_rate * backtest_return_rate:.4f}"
@@ -505,7 +507,7 @@ class StockPricePredictor:
         win_trades = trade_actions[trade_actions["portfolio_value"].diff() > 0]
         win_rate = len(win_trades) / len(trade_actions) if len(trade_actions) > 0 else 0
 
-        print("\nPerformance Metrics (Backtest):")
+        print("\nPerformance Metrics:")
         print(f"MSE: {mean_squared_error(trade_df['close'], trade_df['pred']):.4f}")
         print(f"MAE: {mean_absolute_error(trade_df['close'], trade_df['pred']):.4f}")
         print(f"Initial Capital: ${initial_capital:.2f}")
@@ -516,19 +518,29 @@ class StockPricePredictor:
         print(f"Win Rate: {win_rate*100:.2f}%")
         print(f"Total Trades: {len(trade_actions)}")
 
-        # Visualization
         if show_plot:
             plt.figure(figsize=(12, 6))
 
             # Price and signals plot
             ax1 = plt.subplot(3, 1, 1)
-            plt.plot(trade_df["close"], label="Actual Price", alpha=0.7)
-            plt.plot(
-                trade_df["pred"], label="Predicted Price", linestyle="--", alpha=0.7
+
+            # Plot Actual Price with the first y-axis
+            ax1.plot(trade_df["close"], label="Actual Price", alpha=0.7, color="blue")
+
+            # Create a second y-axis to plot Predicted Price
+            ax2 = ax1.twinx()
+            ax2.plot(
+                trade_df["pred"],
+                label="Predicted Price",
+                linestyle="--",
+                alpha=0.7,
+                color="orange",
             )
+
+            # Plot buy and sell signals
             buy_signals = trade_df[trade_df["action"] == "buy"]
             sell_signals = trade_df[trade_df["action"] == "sell"]
-            plt.scatter(
+            ax1.scatter(
                 buy_signals.index,
                 buy_signals["open"],
                 marker="^",
@@ -537,7 +549,7 @@ class StockPricePredictor:
                 label="Buy",
                 zorder=3,
             )
-            plt.scatter(
+            ax1.scatter(
                 sell_signals.index,
                 sell_signals["open"],
                 marker="v",
@@ -546,11 +558,18 @@ class StockPricePredictor:
                 label="Sell",
                 zorder=3,
             )
-            plt.title("Price and Trading Signals")
-            plt.legend()
+
+            # Set titles and labels
+            ax1.set_title("Price and Trading Signals")
+            ax1.set_ylabel("Actual Price")
+            ax2.set_ylabel("Predicted Price")
+
+            # Adding legends
+            ax1.legend(loc="upper left")
+            ax2.legend(loc="upper right")
 
             # Portfolio value plot
-            ax2 = plt.subplot(3, 1, 2, sharex=ax1)
+            ax3 = plt.subplot(3, 1, 2, sharex=ax1)
             plt.plot(trade_df["portfolio_value"], label="Portfolio", color="purple")
             plt.fill_between(
                 trade_df.index,
@@ -575,7 +594,7 @@ class StockPricePredictor:
             plt.legend()
 
             # Drawdown plot
-            ax3 = plt.subplot(3, 1, 3)
+            ax4 = plt.subplot(3, 1, 3)
             plt.fill_between(
                 trade_df.index, drawdowns * 100, 0, facecolor="red", alpha=0.3
             )
