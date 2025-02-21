@@ -46,6 +46,7 @@ class StockPricePredictor:
         l1_weight_decay=0,  # New parameter for L1 regularization
         test_ratio=0.1,
         features=None,  # New parameter to select features
+        transaction_fee=0.01,
     ):
         """
         Initialize the stock predictor model with provided hyperparameters.
@@ -78,6 +79,7 @@ class StockPricePredictor:
         self.dropout = dropout
         self.l2_weight_decay = l2_weight_decay
         self.l1_weight_decay = l1_weight_decay  # Store L1 weight decay
+        self.transaction_fee = transaction_fee
         self.features = (
             features
             if features is not None
@@ -367,7 +369,7 @@ class StockPricePredictor:
         )
         return score * test_sharpe_ratio * backtest_sharpe_ratio
 
-    def trade_on_test(self, show_plot=True, threshold=0.01, trend_window=3):
+    def trade_on_test(self, show_plot=True):
         """Perform trading simulation based on predicted price trends with improved strategy"""
         self.model.eval()
         with torch.no_grad():
@@ -389,33 +391,27 @@ class StockPricePredictor:
             }
         ).set_index("date")
 
-        # Generate trading signals with threshold and trend confirmation
-        trade_df["trend"] = trade_df["pred"].diff()
-        trade_df["trend_positive"] = (
-            trade_df["trend"]
-            .rolling(window=trend_window, min_periods=1)
-            .apply(lambda x: all(x > 0), raw=True)
-        )
-        trade_df["trend_negative"] = (
-            trade_df["trend"]
-            .rolling(window=trend_window, min_periods=1)
-            .apply(lambda x: all(x < 0), raw=True)
-        )
+        # Calculate trend (difference of predictions)
+        trade_df["trend"] = trade_df["pred"].pct_change()
+
+        # Generate trading signals based on the updated conditions
         trade_df["signal"] = np.where(
-            (trade_df["trend"] > threshold * trade_df["close"])
-            & trade_df["trend_positive"],
-            1,
+            (
+                trade_df["trend"] > (self.transaction_fee * 2)
+            ),  # Buy signal if predicted gain > 2%
+            1,  # Buy signal
             np.where(
-                (trade_df["trend"] < -threshold * trade_df["close"])
-                & trade_df["trend_negative"],
-                -1,
-                0,
+                (
+                    trade_df["trend"] < -self.transaction_fee
+                ),  # Sell signal if price drop > 1%
+                -1,  # Sell signal
+                0,  # Hold signal
             ),
         )
 
         return self._simulate_trading(data=trade_df, show_plot=show_plot)
 
-    def trade_on_train(self, show_plot=True, threshold=0.01, trend_window=3):
+    def trade_on_train(self, show_plot=True):
         """Perform backtest using training data with improved strategy"""
         self.model.eval()
         with torch.no_grad():
@@ -436,26 +432,20 @@ class StockPricePredictor:
             }
         ).set_index("date")
 
-        trade_df_train["trend"] = trade_df_train["pred"].diff()
-        trade_df_train["trend_positive"] = (
-            trade_df_train["trend"]
-            .rolling(window=trend_window, min_periods=1)
-            .apply(lambda x: all(x > 0), raw=True)
-        )
-        trade_df_train["trend_negative"] = (
-            trade_df_train["trend"]
-            .rolling(window=trend_window, min_periods=1)
-            .apply(lambda x: all(x < 0), raw=True)
-        )
+        trade_df_train["trend"] = trade_df_train["pred"].pct_change()*100
+
+        # Generate trading signals based on the updated conditions
         trade_df_train["signal"] = np.where(
-            (trade_df_train["trend"] > threshold * trade_df_train["close"])
-            & trade_df_train["trend_positive"],
-            1,
+            (
+                trade_df_train["trend"] > (self.transaction_fee * 2)
+            ),  # Buy signal if predicted gain > 2%
+            1,  # Buy signal
             np.where(
-                (trade_df_train["trend"] < -threshold * trade_df_train["close"])
-                & trade_df_train["trend_negative"],
-                -1,
-                0,
+                (
+                    trade_df_train["trend"] < -self.transaction_fee
+                ),  # Sell signal if price drop > 1%
+                -1,  # Sell signal
+                0,  # Hold signal
             ),
         )
 
