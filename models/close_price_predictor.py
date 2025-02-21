@@ -357,8 +357,8 @@ class StockPricePredictor:
 
         print(f"Overall Model Score: {score:.4f}")
 
-        test_sharpe_ratio = max(1, self.trade_signal(show_plot=show_plot)) - 1
-        backtest_sharpe_ratio = max(1, self.backtest(show_plot=show_plot)) - 1
+        test_sharpe_ratio = max(1, self.trade_on_test(show_plot=show_plot)) - 1
+        backtest_sharpe_ratio = max(1, self.trade_on_train(show_plot=show_plot)) - 1
         print(f"test_sharpe_ratio: {test_sharpe_ratio:.4f}")
         print(f"backtest_sharpe_ratio: {backtest_sharpe_ratio:.4f}")
         print(f"Overall Score: {score:.4f}")
@@ -367,9 +367,8 @@ class StockPricePredictor:
         )
         return score * test_sharpe_ratio * backtest_sharpe_ratio
 
-    def trade_signal(self, show_plot=True):
-        """Perform trading simulation based on predicted price trends"""
-        # Get predictions
+    def trade_on_test(self, show_plot=True, threshold=0.01, trend_window=3):
+        """Perform trading simulation based on predicted price trends with improved strategy"""
         self.model.eval()
         with torch.no_grad():
             test_pred = self.model(self.X_test).cpu().numpy().flatten()
@@ -390,16 +389,34 @@ class StockPricePredictor:
             }
         ).set_index("date")
 
-        # Generate trading signals
-        trade_df["trend"] = trade_df[
-            "pred"
-        ].diff()  # Current prediction - previous prediction
-        trade_df["signal"] = np.where(trade_df["trend"] > 0, 1, -1)
+        # Generate trading signals with threshold and trend confirmation
+        trade_df["trend"] = trade_df["pred"].diff()
+        trade_df["trend_positive"] = (
+            trade_df["trend"]
+            .rolling(window=trend_window, min_periods=1)
+            .apply(lambda x: all(x > 0), raw=True)
+        )
+        trade_df["trend_negative"] = (
+            trade_df["trend"]
+            .rolling(window=trend_window, min_periods=1)
+            .apply(lambda x: all(x < 0), raw=True)
+        )
+        trade_df["signal"] = np.where(
+            (trade_df["trend"] > threshold * trade_df["close"])
+            & trade_df["trend_positive"],
+            1,
+            np.where(
+                (trade_df["trend"] < -threshold * trade_df["close"])
+                & trade_df["trend_negative"],
+                -1,
+                0,
+            ),
+        )
 
         return self._simulate_trading(data=trade_df, show_plot=show_plot)
 
-    def backtest(self, show_plot=True):
-        """Perform backtest using training data (X_train, y_train) and generate performance metrics"""
+    def trade_on_train(self, show_plot=True, threshold=0.01, trend_window=3):
+        """Perform backtest using training data with improved strategy"""
         self.model.eval()
         with torch.no_grad():
             train_pred = self.model(self.X_train).cpu().numpy().flatten()
@@ -420,7 +437,27 @@ class StockPricePredictor:
         ).set_index("date")
 
         trade_df_train["trend"] = trade_df_train["pred"].diff()
-        trade_df_train["signal"] = np.where(trade_df_train["trend"] > 0, 1, -1)
+        trade_df_train["trend_positive"] = (
+            trade_df_train["trend"]
+            .rolling(window=trend_window, min_periods=1)
+            .apply(lambda x: all(x > 0), raw=True)
+        )
+        trade_df_train["trend_negative"] = (
+            trade_df_train["trend"]
+            .rolling(window=trend_window, min_periods=1)
+            .apply(lambda x: all(x < 0), raw=True)
+        )
+        trade_df_train["signal"] = np.where(
+            (trade_df_train["trend"] > threshold * trade_df_train["close"])
+            & trade_df_train["trend_positive"],
+            1,
+            np.where(
+                (trade_df_train["trend"] < -threshold * trade_df_train["close"])
+                & trade_df_train["trend_negative"],
+                -1,
+                0,
+            ),
+        )
 
         return self._simulate_trading(data=trade_df_train, show_plot=show_plot)
 
@@ -601,3 +638,24 @@ class StockPricePredictor:
             plt.show()
 
         return sharpe_ratio
+
+    def predict_tomorrow_signal(self, threshold=0.01):
+        self.model.eval()
+        with torch.no_grad():
+            last_sequence = self.X_test[-1].unsqueeze(0)
+            predicted_close_scaled = self.model(last_sequence).cpu().numpy()
+            predicted_close = self.result_scaler.inverse_transform(
+                predicted_close_scaled
+            ).flatten()[0]
+            current_close = self.df["Close"].iloc[-1]
+            percentage_change = (predicted_close - current_close) / current_close
+            if percentage_change > threshold:
+                signal = "Buy"
+            elif percentage_change < -threshold:
+                signal = "Sell"
+            else:
+                signal = "Hold"
+            print("--------Next Day Trade Advice:--------")
+            print(f"Predicted Close: {predicted_close}")
+            print(f"Signal: {signal}")
+            return predicted_close, signal

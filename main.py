@@ -43,6 +43,7 @@ def main():
     predictor.train()
     predictor.plot_results()
     predictor.test()
+    predictor.predict_tomorrow_signal()
 
 
 if __name__ == "__main__":
