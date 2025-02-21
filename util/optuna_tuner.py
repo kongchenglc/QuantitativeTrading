@@ -59,6 +59,7 @@ def objective(trial):
 
     model = StockPricePredictor(
         df,
+        transaction_fee=0,  # No transaction fee for enabling unlimited trading during the model's training.
         **hyperparameters,
     )
 
