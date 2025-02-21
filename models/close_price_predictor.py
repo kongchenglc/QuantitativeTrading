@@ -510,10 +510,10 @@ class StockPricePredictor:
                 current_value
             )
 
-            position_size = 1  # all in everytime
+            position_size = 0.1  # Don't all in at one time
 
             # Trading logic
-            if prev_signal == 1 and position == 0:  # Buy signal
+            if prev_signal == 1:  # Buy signal
                 max_shares = (
                     cash * position_size * (1 - self.transaction_fee)
                 ) / current_open  # 1% fee
