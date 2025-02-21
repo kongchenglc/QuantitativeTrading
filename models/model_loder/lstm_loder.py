@@ -7,7 +7,7 @@ torch.manual_seed(42)
 np.random.seed(42)
 
 # Load the checkpoint (saved model)
-checkpoint = torch.load("./models/best_model/best_model_20250221_011748.pth")
+checkpoint = torch.load("./models/best_model/best_model_20250221_132936.pth")
 data = pd.read_csv("data/cleaned_data.csv", index_col="Date")
 
 print("-------torch load pth file-------")
@@ -19,6 +19,7 @@ hyperparameters = checkpoint["hyperparameters"]
 # Initialize the StockPricePredictor with the necessary hyperparameters
 predictor = StockPricePredictor(
     data,
+    transaction_fee=0.0,
     features=hyperparameters["features"],  # Use the features saved in the checkpoint
     n_steps=hyperparameters["n_steps"],
     lr=hyperparameters["lr"],

@@ -396,7 +396,7 @@ class StockPricePredictor:
         print(f"backtest_returns: {backtest_returns:.4f}")
         print(f"Overall Score: {score:.4f}")
         print(
-            f"test_returns * backtest_returns: {score * test_returns * backtest_returns:.4f}"
+            f"test_returns * backtest_returns: {test_returns * backtest_returns:.4f}"
         )
         return test_returns * backtest_returns
 

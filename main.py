@@ -30,16 +30,17 @@ def main():
             "Weekday",
         ],
         **{
-            "n_steps": 45,
-            "lr": 0.002689451684045019,
-            "patience": 24,
+            "n_steps": 127,
+            "lr": 0.0007736014356373611,
+            "patience": 38,
             "num_layers": 1,
-            "hidden_size": 13,
-            "dropout": 0.3685227691893708,
-            "l1_weight_decay": 4.1004497102613036e-05,
-            "l2_weight_decay": 1.6973196937459353e-05,
-            "directional_weight": 0.6086909549054128,
+            "hidden_size": 51,
+            "dropout": 0.1523776191371796,
+            "l1_weight_decay": 9.719495959920035e-08,
+            "l2_weight_decay": 9.516139606710898e-07,
+            "directional_weight": 0.16471075859414067,
         },
+        transaction_fee=0.0,
     )
 
     predictor.train()
