@@ -498,8 +498,6 @@ class StockPricePredictor:
             trade_price=np.nan,
         )
 
-        # Risk management parameters
-        stop_loss_pct = 0.95  # 5% stop loss
         position_size = 0.5  # 50% of capital per trade
 
         # Trading simulation
@@ -512,12 +510,6 @@ class StockPricePredictor:
             trade_df.iloc[i, trade_df.columns.get_loc("portfolio_value")] = (
                 current_value
             )
-
-            # Stop-loss check
-            if position == 1:
-                entry_price = trade_df.at[trade_df.index[i - 1], "trade_price"]
-                if current_open < entry_price * stop_loss_pct:
-                    prev_signal = -1  # Trigger stop loss
 
             # Trading logic
             if prev_signal == 1 and position == 0:  # Buy signal
