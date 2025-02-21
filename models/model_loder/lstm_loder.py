@@ -3,7 +3,7 @@ import pandas as pd
 from models.close_price_predictor import StockPricePredictor
 
 # Load the checkpoint (saved model)
-checkpoint = torch.load("./models/best_model/best_model_20250221_005459.pth")
+checkpoint = torch.load("./models/best_model/best_model_20250221_010203.pth")
 data = pd.read_csv("data/cleaned_data.csv", index_col="Date")
 
 print('-------checkpoint')

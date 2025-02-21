@@ -357,15 +357,15 @@ class StockPricePredictor:
 
         print(f"Overall Model Score: {score:.4f}")
 
-        return_rate = max(0, self.trade_signal(show_plot=show_plot))
-        backtest_return_rate = max(0, self.backtest(show_plot=show_plot))
-        print(f"Test Return rate: {return_rate:.4f}")
-        print(f"Train Return rate: {backtest_return_rate:.4f}")
+        test_sharpe_ratio = max(1, self.trade_signal(show_plot=show_plot)) - 1
+        backtest_sharpe_ratio = max(1, self.backtest(show_plot=show_plot)) - 1
+        print(f"test_sharpe_ratio: {test_sharpe_ratio:.4f}")
+        print(f"backtest_sharpe_ratio: {backtest_sharpe_ratio:.4f}")
         print(f"Overall Score: {score:.4f}")
         print(
-            f"Overall Score * Test Return rate * Train Return rate: {score * return_rate * backtest_return_rate:.4f}"
+            f"Overall Score * test_sharpe_ratio * backtest_sharpe_ratio: {score * test_sharpe_ratio * backtest_sharpe_ratio:.4f}"
         )
-        return score * return_rate * backtest_return_rate
+        return score * test_sharpe_ratio * backtest_sharpe_ratio
 
     def trade_signal(self, show_plot=True):
         """Perform trading simulation based on predicted price trends"""
@@ -400,7 +400,6 @@ class StockPricePredictor:
 
     def backtest(self, show_plot=True):
         """Perform backtest using training data (X_train, y_train) and generate performance metrics"""
-        # 使用训练集进行预测
         self.model.eval()
         with torch.no_grad():
             train_pred = self.model(self.X_train).cpu().numpy().flatten()
@@ -411,7 +410,6 @@ class StockPricePredictor:
             actual_open_train = self.df["Open"].iloc[: len(train_pred)].values
             dates_train = self.df.index[: len(train_pred)]
 
-        # 创建训练集的交易数据框
         trade_df_train = pd.DataFrame(
             {
                 "date": dates_train,
@@ -421,11 +419,9 @@ class StockPricePredictor:
             }
         ).set_index("date")
 
-        # 生成交易信号
         trade_df_train["trend"] = trade_df_train["pred"].diff()
         trade_df_train["signal"] = np.where(trade_df_train["trend"] > 0, 1, -1)
 
-        # 使用训练数据进行回测
         return self._simulate_trading(data=trade_df_train, show_plot=show_plot)
 
     def _simulate_trading(self, data, show_plot=True):
@@ -604,4 +600,4 @@ class StockPricePredictor:
             plt.tight_layout()
             plt.show()
 
-        return returns
+        return sharpe_ratio

@@ -1,8 +1,12 @@
 import torch
 import pandas as pd
+import numpy as np
 from data_collection.clean_data import get_cleaned_data
 from util.pca import pca
 from models.close_price_predictor import StockPricePredictor
+
+torch.manual_seed(42)
+np.random.seed(42)
 
 
 def main():

@@ -6,6 +6,8 @@ import numpy as np
 from util.pca import pca
 from models.close_price_predictor import StockPricePredictor
 
+torch.manual_seed(42)
+np.random.seed(42)
 
 df = pd.read_csv("data/cleaned_data.csv")
 # df = pca(df)
