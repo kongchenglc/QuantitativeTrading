@@ -359,15 +359,15 @@ class StockPricePredictor:
 
         print(f"Overall Model Score: {score:.4f}")
 
-        test_sharpe_ratio = max(1, self.trade_on_test(show_plot=show_plot)) - 1
-        backtest_sharpe_ratio = max(1, self.trade_on_train(show_plot=show_plot)) - 1
-        print(f"test_sharpe_ratio: {test_sharpe_ratio:.4f}")
-        print(f"backtest_sharpe_ratio: {backtest_sharpe_ratio:.4f}")
+        test_returns = max(0, self.trade_on_test(show_plot=show_plot))
+        backtest_returns = max(0, self.trade_on_train(show_plot=show_plot))
+        print(f"test_returns: {test_returns:.4f}")
+        print(f"backtest_returns: {backtest_returns:.4f}")
         print(f"Overall Score: {score:.4f}")
         print(
-            f"Overall Score * test_sharpe_ratio * backtest_sharpe_ratio: {score * test_sharpe_ratio * backtest_sharpe_ratio:.4f}"
+            f"test_returns * backtest_returns: {score * test_returns * backtest_returns:.4f}"
         )
-        return score * test_sharpe_ratio * backtest_sharpe_ratio
+        return test_returns * backtest_returns
 
     def trade_on_test(self, show_plot=True):
         """Perform trading simulation based on predicted price trends with improved strategy"""
@@ -397,13 +397,13 @@ class StockPricePredictor:
         # Generate trading signals based on the updated conditions
         trade_df["signal"] = np.where(
             (
-                trade_df["trend"] > (self.transaction_fee * 2)
-            ),  # Buy signal if predicted gain > 2%
+                trade_df["trend"] > self.transaction_fee
+            ),  # Buy signal if predicted gain > transaction_fee
             1,  # Buy signal
             np.where(
                 (
                     trade_df["trend"] < -self.transaction_fee
-                ),  # Sell signal if price drop > 1%
+                ),  # Sell signal if price drop > transaction_fee
                 -1,  # Sell signal
                 0,  # Hold signal
             ),
@@ -437,13 +437,13 @@ class StockPricePredictor:
         # Generate trading signals based on the updated conditions
         trade_df_train["signal"] = np.where(
             (
-                trade_df_train["trend"] > (self.transaction_fee * 2)
-            ),  # Buy signal if predicted gain > 2%
+                trade_df_train["trend"] > self.transaction_fee
+            ),  # Buy signal if predicted gain > transaction_fee
             1,  # Buy signal
             np.where(
                 (
                     trade_df_train["trend"] < -self.transaction_fee
-                ),  # Sell signal if price drop > 1%
+                ),  # Sell signal if price drop > transaction_fee
                 -1,  # Sell signal
                 0,  # Hold signal
             ),
@@ -627,7 +627,7 @@ class StockPricePredictor:
             plt.tight_layout()
             plt.show()
 
-        return sharpe_ratio
+        return returns
 
     def predict_tomorrow_signal(self):
         self.model.eval()
@@ -662,7 +662,7 @@ class StockPricePredictor:
                 predicted_close - previous_predicted_close
             ) / previous_predicted_close
 
-            if percentage_change > self.transaction_fee * 2:
+            if percentage_change > self.transaction_fee:
                 signal = "Buy"
             elif percentage_change < -self.transaction_fee:
                 signal = "Sell"
