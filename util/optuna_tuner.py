@@ -30,6 +30,7 @@ def objective(trial):
     dropout = trial.suggest_float("dropout", 0.0, 0.4)
     l1_weight_decay = trial.suggest_float("l1_weight_decay", 0.0, 1e-4)
     l2_weight_decay = trial.suggest_float("l2_weight_decay", 0.0, 1e-4)
+    directional_weight = trial.suggest_float("directional_weight", 0.0, 1.0)
 
     hyperparameters = {
         "n_steps": n_steps,
@@ -40,6 +41,7 @@ def objective(trial):
         "dropout": dropout,
         "l1_weight_decay": l1_weight_decay,
         "l2_weight_decay": l2_weight_decay,
+        "directional_weight": directional_weight,
         "features": [
             "Open",
             "Close",

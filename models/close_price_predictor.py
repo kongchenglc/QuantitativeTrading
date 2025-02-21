@@ -47,6 +47,7 @@ class StockPricePredictor:
         test_ratio=0.1,
         features=None,  # New parameter to select features
         transaction_fee=0.01,
+        directional_weight=0.5,
     ):
         """
         Initialize the stock predictor model with provided hyperparameters.
@@ -80,6 +81,7 @@ class StockPricePredictor:
         self.l2_weight_decay = l2_weight_decay
         self.l1_weight_decay = l1_weight_decay  # Store L1 weight decay
         self.transaction_fee = transaction_fee
+        self.directional_weight = directional_weight
         self.features = (
             features
             if features is not None
@@ -188,22 +190,23 @@ class StockPricePredictor:
                 X_train
             )  # Predicted prices (scaled), shape: (batch_size, 1)
 
-            # To calculate returns, we need consecutive predictions
-            # Use the full sequence and slice the output accordingly
             pred_prices = output  # Shape: (batch_size, 1)
             pred_returns = (pred_prices[1:] - pred_prices[:-1]) / (
                 pred_prices[:-1] + 1e-8
-            )  # Predicted returns
+            )
 
-            # Compute actual returns from y_train, aligned with pred_returns
-            actual_returns = (y_train[1:] - y_train[:-1]) / (
-                y_train[:-1] + 1e-8
-            )  # Actual returns
+            actual_returns = (y_train[1:] - y_train[:-1]) / (y_train[:-1] + 1e-8)
 
-            # Calculate loss based on returns
+            # MSE Loss on returns
             train_loss = self.criterion(pred_returns, actual_returns)
 
-            # Add L1 regularization if weight decay is applied
+            # Directional Accuracy Loss
+            directional_loss = torch.mean(
+                (torch.sign(pred_returns) != torch.sign(actual_returns)).float()
+            )
+            train_loss += self.directional_weight * directional_loss
+
+            # L1 regularization
             if self.l1_weight_decay > 0:
                 train_loss += self.l1_regularization()
 
@@ -220,10 +223,18 @@ class StockPricePredictor:
                 val_actual_returns = (y_val[1:] - y_val[:-1]) / (y_val[:-1] + 1e-8)
                 val_loss = self.criterion(val_pred_returns, val_actual_returns)
 
+                # Directional Accuracy Loss
+                val_directional_loss = torch.mean(
+                    (
+                        torch.sign(val_pred_returns) != torch.sign(val_actual_returns)
+                    ).float()
+                )
+                val_loss += self.directional_weight * val_directional_loss
+
             # Print losses every 10 epochs
             if epoch % 10 == 0:
                 print(
-                    f"Epoch {epoch+1}/{self.epochs}, Train Loss (Returns): {train_loss.item():.6f}, Val Loss (Returns): {val_loss.item():.6f}"
+                    f"Epoch {epoch+1}/{self.epochs}, Train Loss: {train_loss.item():.6f}, Val Loss: {val_loss.item():.6f}"
                 )
 
             # Early stopping based on validation loss
@@ -471,6 +482,7 @@ class StockPricePredictor:
 
         return self._simulate_trading(data=trade_df_train, show_plot=show_plot)
 
+    # Todo: Optimise trade strategy
     def _simulate_trading(self, data, show_plot=True):
         """Simulate trading on given trading dataframe (for either train or test data)"""
 
@@ -493,7 +505,7 @@ class StockPricePredictor:
         # Trading simulation
         for i in range(1, len(trade_df)):
             current_open = trade_df["open"].iloc[i]
-            prev_signal = trade_df["signal"].iloc[i - 1]
+            prev_signal = trade_df["signal"].iloc[i]
 
             # Update portfolio value
             current_value = cash + shares * trade_df["close"].iloc[i]
@@ -509,7 +521,9 @@ class StockPricePredictor:
 
             # Trading logic
             if prev_signal == 1 and position == 0:  # Buy signal
-                max_shares = (cash * position_size * 0.99) / current_open  # 1% fee
+                max_shares = (
+                    cash * position_size * (1 - self.transaction_fee)
+                ) / current_open  # 1% fee
                 if max_shares > 0:
                     shares += max_shares
                     cash -= max_shares * current_open
@@ -520,7 +534,9 @@ class StockPricePredictor:
                     )
 
             elif prev_signal == -1 and position == 1:  # Sell signal
-                sell_value = shares * current_open * 0.99  # 1% fee
+                sell_value = (
+                    shares * current_open * (1 - self.transaction_fee)
+                )  # 1% fee
                 cash += sell_value
                 shares = 0
                 position = 0
@@ -529,7 +545,7 @@ class StockPricePredictor:
 
         # Force liquidation on last day
         if shares > 0:
-            cash += shares * trade_df["open"].iloc[-1] * 0.99
+            cash += shares * trade_df["open"].iloc[-1] * (1 - self.transaction_fee)
             trade_df.iloc[-1, trade_df.columns.get_loc("portfolio_value")] = cash
             trade_df.iloc[-1, trade_df.columns.get_loc("action")] = "sell"
 
@@ -682,6 +698,7 @@ class StockPricePredictor:
                 predicted_close - previous_predicted_close
             ) / previous_predicted_close
 
+            # Todo: check if * 2 necessary
             if percentage_change > self.transaction_fee * 2:
                 signal = "Buy"
             elif percentage_change < -self.transaction_fee:

@@ -30,14 +30,15 @@ def main():
             "Weekday",
         ],
         **{
-            "n_steps": 38,
-            "lr": 9.311469091496027e-05,
-            "patience": 9,
-            "num_layers": 1,
-            "hidden_size": 15,
-            "dropout": 0.02736865527236449,
-            "l1_weight_decay": 7.96852925652917e-05,
-            "l2_weight_decay": 2.0419001648218294e-05,
+            "n_steps": 6,
+            "lr": 0.000755571383967672,
+            "patience": 14,
+            "num_layers": 2,
+            "hidden_size": 87,
+            "dropout": 0.2359330236387035,
+            "l1_weight_decay": 5.305815744047952e-05,
+            "l2_weight_decay": 9.789275455192073e-05,
+            "directional_weight": 0.3475018811006327,
         },
     )
 
