@@ -632,7 +632,7 @@ class StockPricePredictor:
     def predict_tomorrow_signal(self):
         self.model.eval()
         with torch.no_grad():
-            all_data = self.scaler.transform(self.df[self.features].values)
+            all_data = self.df[self.features].values
 
             last_n_days = all_data[-self.n_steps :]
             last_sequence_scaled = self.scaler.transform(last_n_days).reshape(
@@ -641,7 +641,6 @@ class StockPricePredictor:
             last_sequence = torch.tensor(last_sequence_scaled, dtype=torch.float32).to(
                 self.device
             )
-
             predicted_close_scaled = self.model(last_sequence).cpu().numpy()
             predicted_close = self.result_scaler.inverse_transform(
                 predicted_close_scaled
@@ -654,7 +653,6 @@ class StockPricePredictor:
             previous_sequence = torch.tensor(
                 previous_sequence_scaled, dtype=torch.float32
             ).to(self.device)
-
             previous_predicted_scaled = self.model(previous_sequence).cpu().numpy()
             previous_predicted_close = self.result_scaler.inverse_transform(
                 previous_predicted_scaled
@@ -671,12 +669,9 @@ class StockPricePredictor:
             else:
                 signal = "Hold"
 
-            current_close = self.df["Close"].iloc[-1]
-
             print("--------Next Day Trade Advice:--------")
             print(f"Predicted Close: {predicted_close}")
             print(f"Previous Predicted Close: {previous_predicted_close}")
             print(f"Percentage Change: {percentage_change:.4f}")
-            print(f"Current Close: {current_close}")
             print(f"Signal: {signal}")
             return predicted_close, signal
