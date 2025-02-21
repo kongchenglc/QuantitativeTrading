@@ -22,14 +22,14 @@ def objective(trial):
     global best_score
 
     # Let Optuna choose hyperparameters
-    n_steps = trial.suggest_int("n_steps", 1, 60)
+    n_steps = trial.suggest_int("n_steps", 1, 180)
     lr = trial.suggest_float("lr", 5e-5, 5e-3, log=True)
-    patience = trial.suggest_int("patience", 3, 30)
+    patience = trial.suggest_int("patience", 1, 100)
     num_layers = trial.suggest_int("num_layers", 1, 3)
-    hidden_size = trial.suggest_int("hidden_size", 8, 125, log=True)
-    dropout = trial.suggest_float("dropout", 0.0, 0.4)
-    l1_weight_decay = trial.suggest_float("l1_weight_decay", 0.0, 1e-4)
-    l2_weight_decay = trial.suggest_float("l2_weight_decay", 0.0, 1e-4)
+    hidden_size = trial.suggest_int("hidden_size", 1, 125, log=True)
+    dropout = trial.suggest_float("dropout", 0.0, 0.5)
+    l1_weight_decay = trial.suggest_float("l1_weight_decay", 0.0, 1e-6)
+    l2_weight_decay = trial.suggest_float("l2_weight_decay", 0.0, 1e-6)
     directional_weight = trial.suggest_float("directional_weight", 0.0, 1.0)
 
     hyperparameters = {
@@ -93,7 +93,7 @@ def callback(study, trial):
 
 
 study = optuna.create_study(direction="maximize")
-study.optimize(objective, n_trials=1000, timeout=3600 * 2, callbacks=[callback])
+study.optimize(objective, n_trials=3000, timeout=3600 * 4, callbacks=[callback])
 
 # Output the best parameters
 print(f"Best parameters: {study.best_params}")
