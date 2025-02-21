@@ -160,7 +160,7 @@ class StockPricePredictor:
         return self.l1_weight_decay * l1_norm
 
     def train(self):
-        """Train the model with early stopping based on validation loss"""
+        """Train the model with early stopping based on validation loss using returns"""
         print("Training model...")
 
         # Split training data into training and validation sets (10% for validation)
@@ -184,8 +184,24 @@ class StockPricePredictor:
             self.optimizer.zero_grad()
 
             # Forward pass for training
-            output = self.model(X_train)
-            train_loss = self.criterion(output, y_train)
+            output = self.model(
+                X_train
+            )  # Predicted prices (scaled), shape: (batch_size, 1)
+
+            # To calculate returns, we need consecutive predictions
+            # Use the full sequence and slice the output accordingly
+            pred_prices = output  # Shape: (batch_size, 1)
+            pred_returns = (pred_prices[1:] - pred_prices[:-1]) / (
+                pred_prices[:-1] + 1e-8
+            )  # Predicted returns
+
+            # Compute actual returns from y_train, aligned with pred_returns
+            actual_returns = (y_train[1:] - y_train[:-1]) / (
+                y_train[:-1] + 1e-8
+            )  # Actual returns
+
+            # Calculate loss based on returns
+            train_loss = self.criterion(pred_returns, actual_returns)
 
             # Add L1 regularization if weight decay is applied
             if self.l1_weight_decay > 0:
@@ -198,12 +214,16 @@ class StockPricePredictor:
             self.model.eval()  # Set model to evaluation mode
             with torch.no_grad():
                 val_output = self.model(X_val)
-                val_loss = self.criterion(val_output, y_val)
+                val_pred_returns = (val_output[1:] - val_output[:-1]) / (
+                    val_output[:-1] + 1e-8
+                )
+                val_actual_returns = (y_val[1:] - y_val[:-1]) / (y_val[:-1] + 1e-8)
+                val_loss = self.criterion(val_pred_returns, val_actual_returns)
 
             # Print losses every 10 epochs
             if epoch % 10 == 0:
                 print(
-                    f"Epoch {epoch+1}/{self.epochs}, Train Loss: {train_loss.item():.6f}, Val Loss: {val_loss.item():.6f}"
+                    f"Epoch {epoch+1}/{self.epochs}, Train Loss (Returns): {train_loss.item():.6f}, Val Loss (Returns): {val_loss.item():.6f}"
                 )
 
             # Early stopping based on validation loss
@@ -397,8 +417,8 @@ class StockPricePredictor:
         # Generate trading signals based on the updated conditions
         trade_df["signal"] = np.where(
             (
-                trade_df["trend"] > self.transaction_fee
-            ),  # Buy signal if predicted gain > transaction_fee
+                trade_df["trend"] > self.transaction_fee * 2
+            ),  # Buy signal if predicted gain > transaction_fee * 2
             1,  # Buy signal
             np.where(
                 (
@@ -437,8 +457,8 @@ class StockPricePredictor:
         # Generate trading signals based on the updated conditions
         trade_df_train["signal"] = np.where(
             (
-                trade_df_train["trend"] > self.transaction_fee
-            ),  # Buy signal if predicted gain > transaction_fee
+                trade_df_train["trend"] > self.transaction_fee * 2
+            ),  # Buy signal if predicted gain > transaction_fee * 2
             1,  # Buy signal
             np.where(
                 (
@@ -662,7 +682,7 @@ class StockPricePredictor:
                 predicted_close - previous_predicted_close
             ) / previous_predicted_close
 
-            if percentage_change > self.transaction_fee:
+            if percentage_change > self.transaction_fee * 2:
                 signal = "Buy"
             elif percentage_change < -self.transaction_fee:
                 signal = "Sell"
