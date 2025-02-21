@@ -498,8 +498,6 @@ class StockPricePredictor:
             trade_price=np.nan,
         )
 
-        position_size = 0.5  # 50% of capital per trade
-
         # Trading simulation
         for i in range(1, len(trade_df)):
             current_open = trade_df["open"].iloc[i]
@@ -514,7 +512,7 @@ class StockPricePredictor:
             # Trading logic
             if prev_signal == 1 and position == 0:  # Buy signal
                 max_shares = (
-                    cash * position_size * (1 - self.transaction_fee)
+                    cash * (1 - self.transaction_fee)
                 ) / current_open  # 1% fee
                 if max_shares > 0:
                     shares += max_shares

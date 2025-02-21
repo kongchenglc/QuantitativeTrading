@@ -6,8 +6,12 @@ from models.close_price_predictor import StockPricePredictor
 torch.manual_seed(42)
 np.random.seed(42)
 
+pth_file_list = [
+    'best_model_20250221_132936.pth'
+]
+
 # Load the checkpoint (saved model)
-checkpoint = torch.load("./models/best_model/best_model_20250221_132936.pth")
+checkpoint = torch.load(f"./models/best_model/{pth_file_list[0]}")
 data = pd.read_csv("data/cleaned_data.csv", index_col="Date")
 
 print("-------torch load pth file-------")
