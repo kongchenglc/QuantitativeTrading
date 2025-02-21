@@ -286,6 +286,7 @@ class StockPricePredictor:
         )
         ax2.set_ylabel("Predicted Stock Price", color="red")
         ax2.tick_params(axis="y", labelcolor="red")
+        ax1.xaxis.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
         plt.xticks(range(0, len(predictions), 1))
         plt.title("Train: Actual vs Predicted")
         plt.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
@@ -334,6 +335,8 @@ class StockPricePredictor:
                 )
                 ax2.set_ylabel("Predicted Close Price", color="red")
                 ax2.tick_params(axis="y", labelcolor="red")
+
+                ax1.xaxis.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
 
                 plt.xticks(range(0, len(test_pred), 1))
 
@@ -395,9 +398,7 @@ class StockPricePredictor:
         print(f"test_returns: {test_returns:.4f}")
         print(f"backtest_returns: {backtest_returns:.4f}")
         print(f"Overall Score: {score:.4f}")
-        print(
-            f"test_returns * backtest_returns: {test_returns * backtest_returns:.4f}"
-        )
+        print(f"test_returns * backtest_returns: {test_returns * backtest_returns:.4f}")
         return test_returns * backtest_returns
 
     def trade_on_test(self, show_plot=True):
@@ -509,10 +510,12 @@ class StockPricePredictor:
                 current_value
             )
 
+            position_size = 1  # all in everytime
+
             # Trading logic
             if prev_signal == 1 and position == 0:  # Buy signal
                 max_shares = (
-                    cash * (1 - self.transaction_fee)
+                    cash * position_size * (1 - self.transaction_fee)
                 ) / current_open  # 1% fee
                 if max_shares > 0:
                     shares += max_shares
@@ -608,6 +611,7 @@ class StockPricePredictor:
                 zorder=3,
             )
 
+            ax1.xaxis.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
             # Set titles and labels
             ax1.set_title("Price and Trading Signals")
             ax1.set_ylabel("Actual Price")

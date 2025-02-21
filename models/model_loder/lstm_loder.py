@@ -7,6 +7,7 @@ torch.manual_seed(42)
 np.random.seed(42)
 
 pth_file_list = [
+    'best_model_20250221_151802.pth',
     'best_model_20250221_132936.pth'
 ]
 
