@@ -432,7 +432,7 @@ class StockPricePredictor:
             }
         ).set_index("date")
 
-        trade_df_train["trend"] = trade_df_train["pred"].pct_change()*100
+        trade_df_train["trend"] = trade_df_train["pred"].pct_change()
 
         # Generate trading signals based on the updated conditions
         trade_df_train["signal"] = np.where(
@@ -629,23 +629,54 @@ class StockPricePredictor:
 
         return sharpe_ratio
 
-    def predict_tomorrow_signal(self, threshold=0.01):
+    def predict_tomorrow_signal(self):
         self.model.eval()
         with torch.no_grad():
-            last_sequence = self.X_test[-1].unsqueeze(0)
+            all_data = self.scaler.transform(self.df[self.features].values)
+
+            last_n_days = all_data[-self.n_steps :]
+            last_sequence_scaled = self.scaler.transform(last_n_days).reshape(
+                1, self.n_steps, -1
+            )
+            last_sequence = torch.tensor(last_sequence_scaled, dtype=torch.float32).to(
+                self.device
+            )
+
             predicted_close_scaled = self.model(last_sequence).cpu().numpy()
             predicted_close = self.result_scaler.inverse_transform(
                 predicted_close_scaled
             ).flatten()[0]
-            current_close = self.df["Close"].iloc[-1]
-            percentage_change = (predicted_close - current_close) / current_close
-            if percentage_change > threshold:
+
+            previous_n_days = all_data[-(self.n_steps + 1) : -1]
+            previous_sequence_scaled = self.scaler.transform(previous_n_days).reshape(
+                1, self.n_steps, -1
+            )
+            previous_sequence = torch.tensor(
+                previous_sequence_scaled, dtype=torch.float32
+            ).to(self.device)
+
+            previous_predicted_scaled = self.model(previous_sequence).cpu().numpy()
+            previous_predicted_close = self.result_scaler.inverse_transform(
+                previous_predicted_scaled
+            ).flatten()[0]
+
+            percentage_change = (
+                predicted_close - previous_predicted_close
+            ) / previous_predicted_close
+
+            if percentage_change > self.transaction_fee * 2:
                 signal = "Buy"
-            elif percentage_change < -threshold:
+            elif percentage_change < -self.transaction_fee:
                 signal = "Sell"
             else:
                 signal = "Hold"
+
+            current_close = self.df["Close"].iloc[-1]
+
             print("--------Next Day Trade Advice:--------")
             print(f"Predicted Close: {predicted_close}")
+            print(f"Previous Predicted Close: {previous_predicted_close}")
+            print(f"Percentage Change: {percentage_change:.4f}")
+            print(f"Current Close: {current_close}")
             print(f"Signal: {signal}")
             return predicted_close, signal
