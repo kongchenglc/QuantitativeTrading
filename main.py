@@ -40,7 +40,7 @@ def main():
             "l2_weight_decay": 8.912680393271883e-08,
             "directional_weight": 0.9288828977846361,
         },
-        transaction_fee=0.0,
+        # transaction_fee=0.0,
     )
 
     predictor.train()

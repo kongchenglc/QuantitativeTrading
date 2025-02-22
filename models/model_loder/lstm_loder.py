@@ -13,7 +13,7 @@ data = pd.read_csv("data/cleaned_data.csv", index_col="Date")
 
 # Load the checkpoint (saved model)
 pth_file_list = [
-    "best_model_20250221_151802.pth", 
+    "best_model_20250221_151802.pth", # fit when transaction_fee=0.0 
     "best_model_20250221_132936.pth"
 ]
 checkpoint = torch.load(f"./models/best_model/{pth_file_list[0]}")  # 0 is newest
@@ -27,7 +27,7 @@ hyperparameters = checkpoint["hyperparameters"]
 # Initialize the StockPricePredictor with the necessary hyperparameters
 predictor = StockPricePredictor(
     data,
-    transaction_fee=0.0,
+    # transaction_fee=0.0,
     features=hyperparameters["features"],  # Use the features saved in the checkpoint
     n_steps=hyperparameters["n_steps"],
     lr=hyperparameters["lr"],

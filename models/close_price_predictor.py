@@ -423,24 +423,6 @@ class StockPricePredictor:
             }
         ).set_index("date")
 
-        # Calculate trend (difference of predictions)
-        trade_df["trend"] = trade_df["pred"].pct_change()
-
-        # Generate trading signals based on the updated conditions
-        trade_df["signal"] = np.where(
-            (
-                trade_df["trend"] > self.transaction_fee * 2
-            ),  # Buy signal if predicted gain > transaction_fee * 2
-            1,  # Buy signal
-            np.where(
-                (
-                    trade_df["trend"] < -self.transaction_fee
-                ),  # Sell signal if price drop > transaction_fee
-                -1,  # Sell signal
-                0,  # Hold signal
-            ),
-        )
-
         return self._simulate_trading(data=trade_df, show_plot=show_plot)
 
     def trade_on_train(self, show_plot=True):
@@ -464,23 +446,6 @@ class StockPricePredictor:
             }
         ).set_index("date")
 
-        trade_df_train["trend"] = trade_df_train["pred"].pct_change()
-
-        # Generate trading signals based on the updated conditions
-        trade_df_train["signal"] = np.where(
-            (
-                trade_df_train["trend"] > self.transaction_fee * 2
-            ),  # Buy signal if predicted gain > transaction_fee * 2
-            1,  # Buy signal
-            np.where(
-                (
-                    trade_df_train["trend"] < -self.transaction_fee
-                ),  # Sell signal if price drop > transaction_fee
-                -1,  # Sell signal
-                0,  # Hold signal
-            ),
-        )
-
         return self._simulate_trading(data=trade_df_train, show_plot=show_plot)
 
     # Todo: Optimise trade strategy
@@ -492,6 +457,18 @@ class StockPricePredictor:
         cash = initial_capital
         shares = 0
         position = 0  # 0: no position, 1: long position
+
+        data["trend"] = data["pred"].pct_change()
+        # Generate trading signals based on the updated conditions
+        data["signal"] = np.where(
+            (data["trend"] > 0),
+            1,  # Buy signal
+            np.where(
+                (data["trend"] < -self.transaction_fee),
+                -1,  # Sell signal
+                0,  # Hold signal
+            ),
+        )
         trade_df = data.assign(
             action="hold",
             portfolio_value=initial_capital,
@@ -502,7 +479,15 @@ class StockPricePredictor:
         # Trading simulation
         for i in range(1, len(trade_df)):
             current_open = trade_df["open"].iloc[i]
-            prev_signal = trade_df["signal"].iloc[i]
+            signal = trade_df["signal"].iloc[i]
+            trend = trade_df["trend"].iloc[i]
+
+            if trend <= 0:
+                position_size = 0
+            elif trend > self.transaction_fee * 2:
+                position_size = 1
+            else:
+                position_size = trend / (self.transaction_fee * 2)
 
             # Update portfolio value
             current_value = cash + shares * trade_df["close"].iloc[i]
@@ -510,10 +495,8 @@ class StockPricePredictor:
                 current_value
             )
 
-            position_size = 0.1  # Don't all in at one time
-
             # Trading logic
-            if prev_signal == 1:  # Buy signal
+            if signal == 1:  # Buy signal
                 max_shares = (
                     cash * position_size * (1 - self.transaction_fee)
                 ) / current_open  # 1% fee
@@ -526,7 +509,7 @@ class StockPricePredictor:
                         current_open
                     )
 
-            elif prev_signal == -1 and position == 1:  # Sell signal
+            elif signal == -1 and position == 1:  # Sell signal
                 sell_value = (
                     shares * current_open * (1 - self.transaction_fee)
                 )  # 1% fee
