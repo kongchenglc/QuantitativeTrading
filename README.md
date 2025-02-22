@@ -77,3 +77,8 @@ Run the main script to execute all the data collection and stock prediction proc
 ```bash
 python main.py
 ```
+
+You can also run the trained best model with:
+```bash
+python -m models.model_loder.lstm_loder
+```
