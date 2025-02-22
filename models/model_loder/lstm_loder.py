@@ -1,19 +1,22 @@
 import torch
 import numpy as np
 import pandas as pd
+from data_collection.clean_data import get_cleaned_data
 from models.close_price_predictor import StockPricePredictor
 
 torch.manual_seed(42)
 np.random.seed(42)
 
-pth_file_list = [
-    'best_model_20250221_151802.pth',
-    'best_model_20250221_132936.pth'
-]
+# data = get_cleaned_data()
+data = pd.read_csv("data/cleaned_data.csv", index_col="Date")
+# data = pd.read_csv("data/test_data.csv", index_col="Date")
 
 # Load the checkpoint (saved model)
-checkpoint = torch.load(f"./models/best_model/{pth_file_list[0]}")
-data = pd.read_csv("data/cleaned_data.csv", index_col="Date")
+pth_file_list = [
+    "best_model_20250221_151802.pth", 
+    "best_model_20250221_132936.pth"
+]
+checkpoint = torch.load(f"./models/best_model/{pth_file_list[0]}")  # 0 is newest
 
 print("-------torch load pth file-------")
 print(checkpoint)
