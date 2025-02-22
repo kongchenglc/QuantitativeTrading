@@ -13,6 +13,7 @@ data = pd.read_csv("data/cleaned_data.csv", index_col="Date")
 
 # Load the checkpoint (saved model)
 pth_file_list = [
+    "best_model_20250221_204147.pth",
     "best_model_20250221_151802.pth", # fit when transaction_fee=0.0 
     "best_model_20250221_132936.pth"
 ]
