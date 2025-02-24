@@ -2,7 +2,7 @@ import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
-
+# Should be used only on train dataset instead of full dataset
 def pca(df, target="Return"):
     print("PCAing...")
     if target not in df.columns:
