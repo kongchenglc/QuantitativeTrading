@@ -675,8 +675,7 @@ class StockPricePredictor:
                 predicted_close - previous_predicted_close
             ) / previous_predicted_close
 
-            # Todo: check if * 2 necessary
-            if percentage_change > self.transaction_fee * 2:
+            if percentage_change > 0:
                 signal = "Buy"
             elif percentage_change < -self.transaction_fee:
                 signal = "Sell"
