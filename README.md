@@ -80,5 +80,5 @@ python main.py
 
 You can also run the trained best model with:
 ```bash
-python -m models.model_loder.lstm_loder
+python -m models.model_loder.lstm_loader
 ```
