@@ -11,8 +11,8 @@ np.random.seed(42)
 
 def main():
 
-    # data = get_cleaned_data()
-    data = pd.read_csv("data/cleaned_data.csv", index_col="Date")
+    data = get_cleaned_data()
+    # data = pd.read_csv("data/cleaned_data.csv", index_col="Date")
     # data = pca(data)
     predictor = StockPricePredictor(
         data,

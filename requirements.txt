@@ -1,7 +1,7 @@
 beautifulsoup4==4.13.3
 fredapi==0.5.2
-matplotlib==3.10.0
-numpy==2.2.3
+matplotlib==3.9.0
+numpy==2
 optuna==4.2.1
 pandas==2.2.3
 python-dotenv==1.0.1
