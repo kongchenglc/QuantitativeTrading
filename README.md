@@ -61,24 +61,19 @@ The LSTM model is designed to predict the closing prices of Nvidia stock based o
    
 2. **Train the Model:**  
    Use the `StockPredictor` class to preprocess the data and train the model.
+   ```bash
+   python main.py
+   ```
 
 3. **Backtest and Predict:**  
    After training, perform backtesting on the test set and predict future stock prices.
 
-## ⚙️ Usage
-Run the main script to execute all the data collection and stock prediction procedures. The script:
-- Collects historical stock data (saved as `data/nvidia_historical_data.csv`)
-- Collects macro-economic data (saved as `data/us_macro_data.csv`)
-- Collects Nvidia news articles with sentiment scores (saved as `data/nvidia_news_en.csv`)
-- Data Cleaning (saved as `data/cleaned_data.csv`)
-- Trains the stock prediction model
-- Performs backtesting and provides predictions for future stock prices
+   Use Optuna to get the best hyperparameters:
+   ```bash
+   python -m util.optuna_tuner.py
+   ```
+   It will save the best result in the models > model_loder. Then you can recur the best model by:
 
-```bash
-python main.py
-```
-
-You can also run the trained best model with:
-```bash
-python -m models.model_loder.lstm_loader
-```
+   ```bash
+   python -m models.model_loder.lstm_loader
+   ```
