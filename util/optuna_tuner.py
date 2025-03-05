@@ -6,6 +6,10 @@ import numpy as np
 from util.pca import pca
 from models.close_price_predictor import StockPricePredictor
 
+import os
+os.environ["PYTORCH_MPS_HIGH_WATERMARK_RATIO"] = "0.0"
+
+
 torch.manual_seed(42)
 np.random.seed(42)
 

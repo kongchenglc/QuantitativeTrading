@@ -7,15 +7,16 @@ from models.close_price_predictor import StockPricePredictor
 torch.manual_seed(42)
 np.random.seed(42)
 
-# data = get_cleaned_data()
-data = pd.read_csv("data/cleaned_data.csv", index_col="Date")
+data = get_cleaned_data()
+# data = pd.read_csv("data/cleaned_data.csv", index_col="Date")
 # data = pd.read_csv("data/test_data.csv", index_col="Date")
 
 # Load the checkpoint (saved model)
 pth_file_list = [
-    "best_model_20250221_204147.pth", # Date end at 2025-02-20
-    "best_model_20250221_151802.pth", # Fit when transaction_fee=0.0 
-    "best_model_20250221_132936.pth"
+    "best_model_20250305_112318.pth",  # The Date of training Data end at 2024, transaction_fee=0.01
+    "best_model_20250221_204147.pth",  # Date end at 2025-02-20
+    "best_model_20250221_151802.pth",  # Date end at 2025-02-20, transaction_fee=0.0
+    "best_model_20250221_132936.pth",
 ]
 checkpoint = torch.load(f"./models/best_model/{pth_file_list[0]}")  # 0 is newest
 
