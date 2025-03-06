@@ -482,12 +482,16 @@ class StockPricePredictor:
             signal = trade_df["signal"].iloc[i]
             trend = trade_df["trend"].iloc[i]
 
-            if trend <= 0:
-                position_size = 0
-            elif trend > self.transaction_fee * 2:
-                position_size = 1
-            else:
-                position_size = trend / (self.transaction_fee * 2)
+            # fixed position_size
+            position_size = 1
+            
+            # auto adjust position_size
+            # if trend <= 0:
+            #     position_size = 0
+            # elif trend > self.transaction_fee * 2:
+            #     position_size = 1
+            # else:
+            #     position_size = trend / (self.transaction_fee * 2)
 
             # Update portfolio value
             current_value = cash + shares * trade_df["close"].iloc[i]

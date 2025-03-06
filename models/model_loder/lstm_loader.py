@@ -13,9 +13,9 @@ data = get_cleaned_data()
 
 # Load the checkpoint (saved model)
 pth_file_list = [
-    "best_model_20250305_112318.pth",  # The Date of training Data end at 2024, transaction_fee=0.01
-    "best_model_20250221_204147.pth",  # Date end at 2025-02-20
-    "best_model_20250221_151802.pth",  # Date end at 2025-02-20, transaction_fee=0.0
+    "best_model_20250221_204147.pth",  # Date end at 2025-02-20, fixed position_size=1 
+    "best_model_20250305_112318.pth",  # The Date of training Data end at 2024, transaction_fee=0.01, auto adjust position_size
+    "best_model_20250221_151802.pth",  # Date end at 2025-02-20, transaction_fee=0.0, position_size=1
     "best_model_20250221_132936.pth",
 ]
 checkpoint = torch.load(f"./models/best_model/{pth_file_list[0]}")  # 0 is newest
