@@ -479,25 +479,20 @@ class StockPricePredictor:
         # Trading simulation
         for i in range(1, len(trade_df)):
             current_open = trade_df["open"].iloc[i]
+            # previous_close = trade_df["close"].iloc[i-1]
             signal = trade_df["signal"].iloc[i]
             trend = trade_df["trend"].iloc[i]
 
             # fixed position_size
             position_size = 1
             
-            # auto adjust position_size
+            # # auto adjust position_size
             # if trend <= 0:
             #     position_size = 0
             # elif trend > self.transaction_fee * 2:
             #     position_size = 1
             # else:
             #     position_size = trend / (self.transaction_fee * 2)
-
-            # Update portfolio value
-            current_value = cash + shares * trade_df["close"].iloc[i]
-            trade_df.iloc[i, trade_df.columns.get_loc("portfolio_value")] = (
-                current_value
-            )
 
             # Trading logic
             if signal == 1:  # Buy signal
@@ -522,6 +517,12 @@ class StockPricePredictor:
                 position = 0
                 trade_df.iloc[i, trade_df.columns.get_loc("action")] = "sell"
                 trade_df.iloc[i, trade_df.columns.get_loc("trade_price")] = current_open
+
+            # Update portfolio value
+            current_value = cash + shares * trade_df["close"].iloc[i]
+            trade_df.iloc[i, trade_df.columns.get_loc("portfolio_value")] = (
+                current_value
+            )
 
         # Force liquidation on last day
         if shares > 0:
@@ -632,6 +633,8 @@ class StockPricePredictor:
             plt.plot(peak_values, linestyle="--", color="darkgreen", label="Peak Value")
             plt.title(f"Portfolio Value (Final: ${cash:.2f})")
             plt.legend()
+            print('???'*4)
+            print(trade_df)
 
             # Drawdown plot
             ax4 = plt.subplot(3, 1, 3)
