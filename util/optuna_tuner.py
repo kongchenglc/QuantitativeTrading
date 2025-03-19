@@ -7,6 +7,7 @@ from util.pca import pca
 from models.close_price_predictor import StockPricePredictor
 
 import os
+
 os.environ["PYTORCH_MPS_HIGH_WATERMARK_RATIO"] = "0.0"
 
 
@@ -14,7 +15,6 @@ torch.manual_seed(42)
 np.random.seed(42)
 
 df = pd.read_csv("data/cleaned_data.csv")
-# df = pca(df)
 
 start_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 best_score = -float("inf")

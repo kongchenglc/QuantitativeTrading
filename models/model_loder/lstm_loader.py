@@ -7,38 +7,28 @@ from models.close_price_predictor import StockPricePredictor
 torch.manual_seed(42)
 np.random.seed(42)
 
-data = get_cleaned_data()
-# data = pd.read_csv("data/cleaned_data.csv", index_col="Date")
+# data = get_cleaned_data()
+data = pd.read_csv("data/cleaned_data.csv", index_col="Date")
 # data = pd.read_csv("data/test_data.csv", index_col="Date")
 
 # Load the checkpoint (saved model)
 pth_file_list = [
-    "best_model_20250221_204147.pth",  # Date end at 2025-02-20, fixed position_size=1 
-    "best_model_20250305_112318.pth",  # The Date of training Data end at 2024, transaction_fee=0.01, auto adjust position_size
-    "best_model_20250221_151802.pth",  # Date end at 2025-02-20, transaction_fee=0.0, position_size=1
-    "best_model_20250221_132936.pth",
+    "best_model_20250221_204147.pth",  # Training data end at 2025-02-20, transaction_fee=0.01, fixed position_size=1
+    "best_model_20250221_151802.pth",  # Training data end at 2025-02-20, transaction_fee=0.0, position_size=1
 ]
 checkpoint = torch.load(f"./models/best_model/{pth_file_list[0]}")  # 0 is newest
 
-print("-------torch load pth file-------")
-print(checkpoint)
-
 # Get the hyperparameters from the checkpoint
 hyperparameters = checkpoint["hyperparameters"]
+
+print("-------torch load pth file-------")
+print(hyperparameters)
 
 # Initialize the StockPricePredictor with the necessary hyperparameters
 predictor = StockPricePredictor(
     data,
     # transaction_fee=0.0,
-    features=hyperparameters["features"],  # Use the features saved in the checkpoint
-    n_steps=hyperparameters["n_steps"],
-    lr=hyperparameters["lr"],
-    patience=hyperparameters["patience"],
-    num_layers=hyperparameters["num_layers"],
-    hidden_size=hyperparameters["hidden_size"],
-    dropout=hyperparameters["dropout"],
-    l1_weight_decay=hyperparameters["l1_weight_decay"],
-    l2_weight_decay=hyperparameters["l2_weight_decay"],
+    **hyperparameters,  # Use the features saved in the checkpoint
 )
 
 predictor.model.load_state_dict(checkpoint["model_state_dict"])

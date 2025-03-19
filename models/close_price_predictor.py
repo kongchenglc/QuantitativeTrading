@@ -48,6 +48,7 @@ class StockPricePredictor:
         features=None,  # New parameter to select features
         transaction_fee=0.01,
         directional_weight=0.5,
+        take_profit=0.5,
     ):
         """
         Initialize the stock predictor model with provided hyperparameters.
@@ -82,6 +83,7 @@ class StockPricePredictor:
         self.l1_weight_decay = l1_weight_decay  # Store L1 weight decay
         self.transaction_fee = transaction_fee
         self.directional_weight = directional_weight
+        self.take_profit = take_profit
         self.features = (
             features
             if features is not None
@@ -457,11 +459,12 @@ class StockPricePredictor:
         cash = initial_capital
         shares = 0
         position = 0  # 0: no position, 1: long position
+        buy_in_price = float("inf")
 
         data["trend"] = data["pred"].pct_change()
         # Generate trading signals based on the updated conditions
         data["signal"] = np.where(
-            (data["trend"] > 0),
+            (data["trend"] >= self.transaction_fee),
             1,  # Buy signal
             np.where(
                 (data["trend"] < -self.transaction_fee),
@@ -479,29 +482,32 @@ class StockPricePredictor:
         # Trading simulation
         for i in range(1, len(trade_df)):
             current_open = trade_df["open"].iloc[i]
-            # previous_close = trade_df["close"].iloc[i-1]
+            # previous_close = trade_df["close"].iloc[i - 1]
             signal = trade_df["signal"].iloc[i]
-            trend = trade_df["trend"].iloc[i]
+            # trend = trade_df["trend"].iloc[i]
 
             # fixed position_size
-            position_size = 1
-            
-            # # auto adjust position_size
-            # if trend <= 0:
-            #     position_size = 0
-            # elif trend > self.transaction_fee * 2:
-            #     position_size = 1
-            # else:
-            #     position_size = trend / (self.transaction_fee * 2)
+            position_size = 0.2 * initial_capital
+            buy_in_amount = (
+                position_size
+                if cash >= position_size
+                else cash
+            )
+
+            if position == 1:
+                if ((current_open - buy_in_price) / buy_in_price) > self.take_profit:
+                    signal = -1
 
             # Trading logic
             if signal == 1:  # Buy signal
                 max_shares = (
-                    cash * position_size * (1 - self.transaction_fee)
+                    buy_in_amount * (1 - self.transaction_fee)
                 ) / current_open  # 1% fee
                 if max_shares > 0:
                     shares += max_shares
-                    cash -= max_shares * current_open
+                    cash -= buy_in_amount
+                    if position == 0:
+                        buy_in_price = current_open
                     position = 1
                     trade_df.iloc[i, trade_df.columns.get_loc("action")] = "buy"
                     trade_df.iloc[i, trade_df.columns.get_loc("trade_price")] = (
@@ -517,6 +523,7 @@ class StockPricePredictor:
                 position = 0
                 trade_df.iloc[i, trade_df.columns.get_loc("action")] = "sell"
                 trade_df.iloc[i, trade_df.columns.get_loc("trade_price")] = current_open
+                buy_in_price = float("inf")
 
             # Update portfolio value
             current_value = cash + shares * trade_df["close"].iloc[i]
@@ -633,8 +640,6 @@ class StockPricePredictor:
             plt.plot(peak_values, linestyle="--", color="darkgreen", label="Peak Value")
             plt.title(f"Portfolio Value (Final: ${cash:.2f})")
             plt.legend()
-            print('???'*4)
-            print(trade_df)
 
             # Drawdown plot
             ax4 = plt.subplot(3, 1, 3)
