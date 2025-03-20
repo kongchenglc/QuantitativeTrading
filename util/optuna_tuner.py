@@ -14,9 +14,9 @@ os.environ["PYTORCH_MPS_HIGH_WATERMARK_RATIO"] = "0.0"
 torch.manual_seed(42)
 np.random.seed(42)
 
-df = pd.read_csv("data/cleaned_data.csv")
-df.index = pd.to_datetime(df.index)
-df = df[df.index.year < 2025] # data after 2025 for test
+data = pd.read_csv("data/cleaned_data.csv", index_col="Date")
+data.index = pd.to_datetime(data.index)
+df = data[data.index.year < 2025] # data after 2025 for test
 
 start_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 best_score = -float("inf")

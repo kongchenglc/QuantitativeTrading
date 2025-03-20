@@ -484,15 +484,13 @@ class StockPricePredictor:
             current_open = trade_df["open"].iloc[i]
             # previous_close = trade_df["close"].iloc[i - 1]
             signal = trade_df["signal"].iloc[i]
-            # trend = trade_df["trend"].iloc[i]
+            trend = trade_df["trend"].iloc[i]
 
             # fixed position_size
-            position_size = 0.2 * initial_capital
-            buy_in_amount = (
-                position_size
-                if cash >= position_size
-                else cash
-            )
+            # position_size = 0.2 * initial_capital
+            position_size = 0.5 * initial_capital * (trend / 0.02)  # kelly
+
+            buy_in_amount = position_size if cash >= position_size else cash
 
             if position == 1:
                 if ((current_open - buy_in_price) / buy_in_price) > self.take_profit:
