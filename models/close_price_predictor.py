@@ -48,7 +48,7 @@ class StockPricePredictor:
         features=None,  # New parameter to select features
         transaction_fee=0.01,
         directional_weight=0.5,
-        take_profit=0.5,
+        take_profit=0.2,
     ):
         """
         Initialize the stock predictor model with provided hyperparameters.
@@ -488,7 +488,7 @@ class StockPricePredictor:
 
             # fixed position_size
             # position_size = 0.2 * initial_capital
-            position_size = 0.5 * initial_capital * (trend / 0.02)  # kelly
+            position_size = 0.2 * initial_capital * (trend / 0.02)  # kelly
 
             buy_in_amount = position_size if cash >= position_size else cash
 
