@@ -29,7 +29,7 @@ print(hyperparameters)
 # Initialize the StockPricePredictor with the necessary hyperparameters
 predictor = StockPricePredictor(
     data,
-    # transaction_fee=0.0,
+    transaction_fee=0.0,
     **hyperparameters,  # Use the features saved in the checkpoint
 )
 
