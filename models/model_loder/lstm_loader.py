@@ -7,8 +7,8 @@ from models.close_price_predictor import StockPricePredictor
 torch.manual_seed(42)
 np.random.seed(42)
 
-# data = get_cleaned_data()
-data = pd.read_csv("data/cleaned_data.csv", index_col="Date")
+data = get_cleaned_data()
+# data = pd.read_csv("data/cleaned_data.csv", index_col="Date")
 # data = pd.read_csv("data/test_data.csv", index_col="Date")
 
 # Load the checkpoint (saved model)
