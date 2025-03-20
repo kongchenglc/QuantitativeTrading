@@ -15,6 +15,8 @@ torch.manual_seed(42)
 np.random.seed(42)
 
 df = pd.read_csv("data/cleaned_data.csv")
+df.index = pd.to_datetime(df.index)
+df = df[df.index.year < 2025] # data after 2025 for test
 
 start_time = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 best_score = -float("inf")
@@ -63,7 +65,8 @@ def objective(trial):
 
     model = StockPricePredictor(
         df,
-        # transaction_fee=0,  # No transaction fee for enabling unlimited trading during the model's training.
+        transaction_fee=0,  # No transaction fee for enabling unlimited trading during the model's training.
+        take_profit=float("inf"),  # No take_profit for enabling unlimited trading during the model's training.
         **hyperparameters,
     )
 
