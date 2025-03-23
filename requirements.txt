@@ -12,3 +12,4 @@ torch==2.6.0
 transformers==4.48.3
 xgboost==2.1.4
 yfinance==0.2.53
+scipy==1.15.2
