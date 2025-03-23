@@ -1,0 +1,9 @@
+name: nvidia-stock
+channels:
+  - defaults
+dependencies:
+  - python
+  - matplotlib
+  - numpy
+  - conda-forge::yfinance
+  - scipy
