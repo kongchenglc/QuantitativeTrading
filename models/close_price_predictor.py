@@ -698,8 +698,8 @@ class StockPricePredictor:
             print(
                 f"--------Next Day ({next_day_date.strftime('%Y-%m-%d')}) Trade Advice:--------"
             )
-            print(f"Predicted Close: {predicted_close}")
-            print(f"Previous Predicted Close: {previous_predicted_close}")
-            print(f"Percentage Change: {percentage_change:.4f}")
+            # print(f"Predicted Close: {predicted_close}")
+            # print(f"Previous Predicted Close: {previous_predicted_close}")
+            print(f"Predicted Percentage Change: {percentage_change:.4f}")
             print(f"Signal: {signal}")
             return predicted_close, signal
