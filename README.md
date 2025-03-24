@@ -33,11 +33,13 @@ The project includes a predictive model for forecasting Nvidia's stock price usi
     - Trains on historical stock data, incorporating sequence-based time series analysis.
 
 - **Linear Regression Model**
-  - Implements a linear regression model that is based on moving day averages. See `models/linear_regression`
+  - Implements a linear regression model that is based on exponential moving averages. See `models/linear_regression/ema.py`
   - **Features:**
     - Pulls NVIDIA's data from `yfinance` (since January 1, 2025)
     - Calculates the trend slope and plots the result
-    - The trend slope provides insights into whether the price is trending upwards or downwards. The insight can help with making more informed decisions
+    - The trend slope provides insights into whether the price is trending upwards or downwards.
+    - EMA is chosen as it's more suitable for short term trading decisions compared to SMA (Simple Moving Average).
+    - The final decision is printed on the terminal after running the script with `python ema.py`
 
 ---
 
@@ -50,6 +52,19 @@ git clone https://github.com/kongchenglc/QuantitativeTrading.git
 cd QuantitativeTrading
 pip install -r requirements.txt
 ```
+
+⚠️ ‼️ **A FRED API key is required for the LSTM model** ⚠️‼️
+
+- Head over to https://fred.stlouisfed.org/docs/api/api_key.html to generate an API key
+- Once you generate a key, create an `.env` file in the root directory of the repo
+- Add your API key here as `FRED_API_KEY=<your key>`
+
+### Conda
+
+1. If you are using Conda, you can create a new environment by running `conda env create -f environment.yml`.
+2. This command will create a new Conda environment for you with the dependencies declared in `environment.yml`.
+3. Once Step 2 finishes, activate the environment: `conda activate nvidia-quantitative-stock`
+4. You can now run the scripts 🎉
 
 ---
 
@@ -100,6 +115,6 @@ The LSTM model is designed to predict the closing prices of Nvidia stock based o
 ⚠️ Please note that this model should be run separately
 
 1. Set your directory to `models/linear_regression`
-2. Run `python main.py`
+2. Run `python ema.py`
 
-Output: The `main.py` will run and create plots in a new window
+Output: The `ema.py` script will run and create plots in a new window. Once the plot window is closed, the decision for the next day is printed.
