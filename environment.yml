@@ -1,0 +1,20 @@
+name: nvidia-quantitative-stock
+channels:
+  - defaults
+dependencies:
+  - python
+  - matplotlib
+  - numpy
+  - conda-forge::yfinance
+  - scipy
+  - beautifulsoup4
+  - fredapi
+  - optuna
+  - pandas
+  - python-dotenv
+  - Requests
+  - anaconda::scikit-learn
+  - shap
+  - conda-forge::pytorch
+  - transformers
+  - xgboost
