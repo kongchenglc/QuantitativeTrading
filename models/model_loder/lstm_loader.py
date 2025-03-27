@@ -13,6 +13,7 @@ data = get_cleaned_data()
 
 # Load the checkpoint (saved model)
 pth_file_list = [
+    "best_model_20250326_212038.pth",  # Training data end at 2024, transaction_fee=0.00, fixed position_size=kelly
     "best_model_20250320_100354.pth",  # Training data end at 2024, transaction_fee=0.00, fixed position_size=kelly
     # "best_model_20250319_202207.pth",  # Training data end at 2024, transaction_fee=0.00, fixed position_size=2000
     # "best_model_20250319_145441.pth",  # Training data end at 2024, transaction_fee=0.01, fixed position_size=2000
