@@ -450,7 +450,6 @@ class StockPricePredictor:
 
         return self._simulate_trading(data=trade_df_train, show_plot=show_plot)
 
-    # Todo: Optimise trade strategy
     def _simulate_trading(self, data, show_plot=True):
         """Simulate trading on given trading dataframe (for either train or test data)"""
 
@@ -461,7 +460,23 @@ class StockPricePredictor:
         position = 0  # 0: no position, 1: long position
         buy_in_price = float("inf")
 
-        data["trend"] = data["pred"].pct_change()
+        # Calculate standard percentage change but handle negative prices correctly
+        pred_values = data["pred"].values
+        data["trend"] = np.zeros(len(data))
+        
+        for i in range(1, len(pred_values)):
+            current = pred_values[i]
+            previous = pred_values[i-1]
+            
+            # Handle the case where previous is zero
+            if previous == 0:
+                # Avoid division by zero
+                data.iloc[i, data.columns.get_loc("trend")] = 1 if current > previous else -1
+            else:
+                # Calculate standard percentage change
+                percentage_change = (current - previous) / abs(previous)
+                data.iloc[i, data.columns.get_loc("trend")] = percentage_change
+        
         # Generate trading signals based on the updated conditions
         data["signal"] = np.where(
             (data["trend"] >= self.transaction_fee),
@@ -681,11 +696,15 @@ class StockPricePredictor:
                 previous_predicted_scaled
             ).flatten()[0]
 
-            percentage_change = (
-                predicted_close - previous_predicted_close
-            ) / previous_predicted_close
+            # Calculate percentage change using standard formula but handle negative/zero values
+            if previous_predicted_close == 0:
+                # Avoid division by zero
+                percentage_change = 1 if predicted_close > previous_predicted_close else -1
+            else:
+                # Standard percentage change calculation
+                percentage_change = (predicted_close - previous_predicted_close) / abs(previous_predicted_close)
 
-            if percentage_change > 0:
+            if percentage_change >= self.transaction_fee:
                 signal = "Buy"
             elif percentage_change < -self.transaction_fee:
                 signal = "Sell"
@@ -698,8 +717,8 @@ class StockPricePredictor:
             print(
                 f"--------Next Day ({next_day_date.strftime('%Y-%m-%d')}) Trade Advice:--------"
             )
-            # print(f"Predicted Close: {predicted_close}")
-            # print(f"Previous Predicted Close: {previous_predicted_close}")
+            print(f"Predicted Close: {predicted_close:.2f}")
+            print(f"Previous Predicted Close: {previous_predicted_close:.2f}")
             print(f"Predicted Percentage Change: {percentage_change:.4f}")
             print(f"Signal: {signal}")
             return predicted_close, signal
