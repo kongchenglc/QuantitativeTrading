@@ -53,6 +53,8 @@ def fetch_news(years=6):
     df = pd.DataFrame(news_data)
     df = df.drop_duplicates(subset=["Link"], keep="first")
 
+    df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+    df["Date"] = df["Date"].dt.tz_localize(None)
     df.sort_values("Date", ascending=True, inplace=True)
     df.set_index("Date", inplace=True)
     df.to_csv("data/nvidia_news_en.csv", index=True)
