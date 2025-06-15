@@ -311,44 +311,44 @@ class StockPricePredictor:
 
             test_indices = range(len(test_pred))
 
-            if show_plot:
-                plt.figure(figsize=(12, 6))
+            # if show_plot:
+            #     plt.figure(figsize=(12, 6))
 
-                ax1 = plt.gca()
-                ax1.plot(
-                    test_indices,
-                    actual_test_close,
-                    label="Actual Close",
-                    color="blue",
-                    linewidth=2,
-                )
-                ax1.set_xlabel("Time Steps")
-                ax1.set_ylabel("Actual Close Price", color="blue")
-                ax1.tick_params(axis="y", labelcolor="blue")
+            #     ax1 = plt.gca()
+            #     ax1.plot(
+            #         test_indices,
+            #         actual_test_close,
+            #         label="Actual Close",
+            #         color="blue",
+            #         linewidth=2,
+            #     )
+            #     ax1.set_xlabel("Time Steps")
+            #     ax1.set_ylabel("Actual Close Price", color="blue")
+            #     ax1.tick_params(axis="y", labelcolor="blue")
 
-                ax2 = ax1.twinx()
-                ax2.plot(
-                    test_indices,
-                    test_pred,
-                    label="Predicted Close",
-                    color="red",
-                    linestyle="--",
-                    linewidth=2,
-                )
-                ax2.set_ylabel("Predicted Close Price", color="red")
-                ax2.tick_params(axis="y", labelcolor="red")
+            #     ax2 = ax1.twinx()
+            #     ax2.plot(
+            #         test_indices,
+            #         test_pred,
+            #         label="Predicted Close",
+            #         color="red",
+            #         linestyle="--",
+            #         linewidth=2,
+            #     )
+            #     ax2.set_ylabel("Predicted Close Price", color="red")
+            #     ax2.tick_params(axis="y", labelcolor="red")
 
-                ax1.xaxis.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
+            #     ax1.xaxis.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
 
-                plt.xticks(range(0, len(test_pred), 1))
+            #     plt.xticks(range(0, len(test_pred), 1))
 
-                plt.title("Test Results")
-                plt.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
+            #     plt.title("Test Results")
+            #     plt.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
 
-                ax1.legend(loc="upper left")
-                ax2.legend(loc="upper right")
+            #     ax1.legend(loc="upper left")
+            #     ax2.legend(loc="upper right")
 
-                plt.show()
+            #     plt.show()
 
         mse = mean_squared_error(actual_test_close, test_pred)
         mae = mean_absolute_error(actual_test_close, test_pred)

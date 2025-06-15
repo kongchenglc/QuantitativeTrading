@@ -32,6 +32,6 @@ predictor = StockPricePredictor(
 
 predictor.model.load_state_dict(checkpoint["model_state_dict"])
 
-predictor.plot_results()
+# predictor.plot_results()
 predictor.test()
 predictor.predict_tomorrow_signal()
