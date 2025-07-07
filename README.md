@@ -20,7 +20,7 @@ Results:
 - Win Rate: 55.00%
 - Total Trades: 120
 
-> 💰 Hope this helps you get rich — or at least lose money more elegantly. 💸 
+Hope this helps you get rich 💰 — or at least lose money more elegantly. 💸 
 
 ---
 
