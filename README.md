@@ -21,6 +21,7 @@ Results:
 - Total Trades: 120
 
 Hope this helps you get rich 💰 — or at least lose money more elegantly. 💸 
+If this project makes you rich, feel free to buy me a coffee ☕ or a Tesla 🏎️.
 
 ---
 
