@@ -1,6 +1,6 @@
 # 📈 Quantitative Trading: Nvidia Stock Prediction 🚀
 
-The project includes a predictive model that generates trading signals (buy/sell/hold) for Nvidia’s stock based on historical data using an LSTM-based neural network. 
+The project includes a predictive model that generates trading signals ( buy / sell / hold ) for Nvidia’s stock based on historical data using an LSTM-based neural network. 
 
 You can run the model directly, and the predicted signal for the next trading day will be displayed in the command line:
 
