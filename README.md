@@ -1,6 +1,23 @@
 # 📈 Quantitative Trading: Nvidia Stock Prediction 🚀
 
-The project includes a predictive model for forecasting Nvidia's stock price using an LSTM-based neural network.
+The project includes a predictive model for forecasting Nvidia's stock price using an LSTM-based neural network. You can directly run the model to generate predictions based on the historical stock data uploaded.
+
+```bash
+python -m models.model_loder.lstm_loader
+```
+
+Screenshot on 2025-07-08:
+
+![](./imgs/prediction.png)
+
+
+- Initial Capital: $10000.00
+- Final Value: $15385.39
+- Return: 53.85%
+- Max Drawdown: 17.80%
+- Sharpe Ratio: 1.64
+- Win Rate: 55.00%
+- Total Trades: 120
 
 ---
 
@@ -29,17 +46,8 @@ The project includes a predictive model for forecasting Nvidia's stock price usi
   - **LSTM-based Stock Price Prediction:**  
     Implements a Long Short-Term Memory (LSTM) model to predict Nvidia's stock closing prices based on historical data.
   - **Features:**
-    - Predicts closing prices for the next day.
     - Trains on historical stock data, incorporating sequence-based time series analysis.
-
-- **Linear Regression Model**
-  - Implements a linear regression model that is based on exponential moving averages. See `models/linear_regression/ema.py`
-  - **Features:**
-    - Pulls NVIDIA's data from `yfinance` (since January 1, 2025)
-    - Calculates the trend slope and plots the result
-    - The trend slope provides insights into whether the price is trending upwards or downwards.
-    - EMA is chosen as it's more suitable for short term trading decisions compared to SMA (Simple Moving Average).
-    - The final decision is printed on the terminal after running the script with `python ema.py`
+    - Predicts closing prices for the next day.
 
 ---
 
@@ -53,7 +61,7 @@ cd QuantitativeTrading
 pip install -r requirements.txt
 ```
 
-⚠️ ‼️ **A FRED API key is required for the LSTM model** ⚠️‼️
+### ⚠️ A FRED API key is required
 
 - Head over to https://fred.stlouisfed.org/docs/api/api_key.html to generate an API key
 - Once you generate a key, create an `.env` file in the root directory of the repo
@@ -84,37 +92,23 @@ The LSTM model is designed to predict the closing prices of Nvidia stock based o
 
 ### Usage:
 
-1. **Prepare the Data:**  
-   The data should be in a DataFrame format containing historical stock prices.
-2. **Train the Model:**  
-   Use the `StockPredictor` class to preprocess the data and train the model.
+1. **Train the Model:**  
+Use the `StockPredictor` class to preprocess the data and train the model.
 
-   ```bash
-   python main.py
-   ```
+```bash
+python main.py
+```
 
-3. **Backtest and Predict:**  
-   After training, perform backtesting on the test set and predict future stock prices.
+Use Optuna to get the best hyperparameters:
 
-   Use Optuna to get the best hyperparameters:
+```bash
+python -m util.optuna_tuner.py
+```
 
-   ```bash
-   python -m util.optuna_tuner.py
-   ```
+2. **Predict:**  
 
-   It will save the best result in the models > model_loder. Then you can recur the best model by:
+Install the required dependencies. Then, run the following command to generate the predictive trade signal for the next day:
 
-   ```bash
-   python -m models.model_loder.lstm_loader
-   ```
-
----
-
-## 📈 Linear Regression Model
-
-⚠️ Please note that this model should be run separately
-
-1. Set your directory to `models/linear_regression`
-2. Run `python ema.py`
-
-Output: The `ema.py` script will run and create plots in a new window. Once the plot window is closed, the decision for the next day is printed.
+```bash
+python -m models.model_loder.lstm_loader
+```

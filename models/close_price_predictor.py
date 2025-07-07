@@ -720,5 +720,5 @@ class StockPricePredictor:
             print(f"Predicted Close: {predicted_close:.2f}")
             print(f"Previous Predicted Close: {previous_predicted_close:.2f}")
             print(f"Predicted Percentage Change: {percentage_change:.4f}")
-            print(f"Signal: {signal}")
+            print(f"Trade Signal: {signal}")
             return predicted_close, signal
