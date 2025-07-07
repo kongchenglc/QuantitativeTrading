@@ -21,36 +21,6 @@ Screenshot on 2025-07-08:
 
 ---
 
-## 📌 Current Features
-
-- **Data Collection**
-
-  - **Historical Stock Price Analysis:**  
-    Utilizes the [Yahoo Finance API](https://finance.yahoo.com/) to fetch Nvidia (NVDA) stock data, while also computing key technical indicators:
-    - Simple Moving Averages (SMA)
-    - Exponential Moving Averages (EMA)
-    - Relative Strength Index (RSI)
-    - MACD (Moving Average Convergence Divergence)
-    - Bollinger Bands
-  - **Macro-Economic Data:**  
-    Leverages the [Federal Reserve Economic Data (FRED)](https://fred.stlouisfed.org/) API via the `fredapi` package to obtain:
-    - Interest Rates
-    - Inflation Rates
-    - Unemployment Rates
-    - GDP Data
-  - **News & Sentiment Analysis:**  
-    Scrapes Nvidia-related news from the Google News RSS feed and computes sentiment scores using VADER.
-
-- **Stock Prediction Model (LSTM)**
-
-  - **LSTM-based Stock Price Prediction:**  
-    Implements a Long Short-Term Memory (LSTM) model to predict Nvidia's stock closing prices based on historical data.
-  - **Features:**
-    - Trains on historical stock data, incorporating sequence-based time series analysis.
-    - Predicts closing prices for the next day.
-
----
-
 ## 🛠 Installation
 
 Ensure you have **Python 3.8+** installed. Then clone the repository and install the required dependencies:
@@ -112,3 +82,33 @@ Install the required dependencies. Then, run the following command to generate t
 ```bash
 python -m models.model_loder.lstm_loader
 ```
+
+---
+
+## 📌 Current Features
+
+- **Data Collection**
+
+  - **Historical Stock Price Analysis:**  
+    Utilizes the [Yahoo Finance API](https://finance.yahoo.com/) to fetch Nvidia (NVDA) stock data, while also computing key technical indicators:
+    - Simple Moving Averages (SMA)
+    - Exponential Moving Averages (EMA)
+    - Relative Strength Index (RSI)
+    - MACD (Moving Average Convergence Divergence)
+    - Bollinger Bands
+  - **Macro-Economic Data:**  
+    Leverages the [Federal Reserve Economic Data (FRED)](https://fred.stlouisfed.org/) API via the `fredapi` package to obtain:
+    - Interest Rates
+    - Inflation Rates
+    - Unemployment Rates
+    - GDP Data
+  - **News & Sentiment Analysis:**  
+    Scrapes Nvidia-related news from the Google News RSS feed and computes sentiment scores using VADER.
+
+- **Stock Prediction Model (LSTM)**
+
+  - **LSTM-based Stock Price Prediction:**  
+    Implements a Long Short-Term Memory (LSTM) model to predict Nvidia's stock closing prices based on historical data.
+  - **Features:**
+    - Trains on historical stock data, incorporating sequence-based time series analysis.
+    - Predicts closing prices for the next day.
