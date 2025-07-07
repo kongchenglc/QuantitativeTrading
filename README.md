@@ -1,16 +1,17 @@
 # 📈 Quantitative Trading: Nvidia Stock Prediction 🚀
 
-The project includes a predictive model for forecasting Nvidia's stock price using an LSTM-based neural network. You can directly run the model to generate predictions based on the historical stock data uploaded.
+The project includes a predictive model that generates trading signals (buy/sell/hold) for Nvidia’s stock based on historical data using an LSTM-based neural network. 
+
+You can run the model directly, and the predicted signal for the next trading day will be displayed in the command line:
 
 ```bash
 python -m models.model_loder.lstm_loader
 ```
 
 Screenshot on 2025-07-08:
-
 ![](./imgs/prediction.png)
 
-
+Results:
 - Initial Capital: $10000.00
 - Final Value: $15385.39
 - Return: 53.85%
