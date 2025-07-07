@@ -21,6 +21,45 @@ Screenshot on 2025-07-08:
 
 ---
 
+## 🧠 LSTM Stock Prediction Model
+
+The LSTM model is designed to predict the closing prices of Nvidia stock based on historical price data. It uses a sequence-based model where past prices are used to predict future prices.
+
+### Key Components:
+
+- **LSTM Model:**
+  - Input: Historical closing prices (last `n_steps` days).
+  - Output: Predicted closing price for the next day.
+  - The model is built using PyTorch and consists of an LSTM layer followed by a fully connected layer.
+- **Data Preprocessing:**
+  - The data is normalized using MinMaxScaler.
+  - The dataset is split into training and testing sets, with a rolling window approach for time-series prediction.
+
+### Usage:
+
+1. **Train the Model:**  
+Use the `StockPredictor` class to preprocess the data and train the model.
+
+```bash
+python main.py
+```
+
+Use Optuna to get the best hyperparameters:
+
+```bash
+python -m util.optuna_tuner.py
+```
+
+2. **Predict:**  
+
+Install the required dependencies. Then, run the following command to generate the predictive trade signal for the next day:
+
+```bash
+python -m models.model_loder.lstm_loader
+```
+
+---
+
 ## 📌 Current Features
 
 - **Data Collection**
@@ -73,42 +112,3 @@ pip install -r requirements.txt
 2. This command will create a new Conda environment for you with the dependencies declared in `environment.yml`.
 3. Once Step 2 finishes, activate the environment: `conda activate nvidia-quantitative-stock`
 4. You can now run the scripts 🎉
-
----
-
-## 🧠 LSTM Stock Prediction Model
-
-The LSTM model is designed to predict the closing prices of Nvidia stock based on historical price data. It uses a sequence-based model where past prices are used to predict future prices.
-
-### Key Components:
-
-- **LSTM Model:**
-  - Input: Historical closing prices (last `n_steps` days).
-  - Output: Predicted closing price for the next day.
-  - The model is built using PyTorch and consists of an LSTM layer followed by a fully connected layer.
-- **Data Preprocessing:**
-  - The data is normalized using MinMaxScaler.
-  - The dataset is split into training and testing sets, with a rolling window approach for time-series prediction.
-
-### Usage:
-
-1. **Train the Model:**  
-Use the `StockPredictor` class to preprocess the data and train the model.
-
-```bash
-python main.py
-```
-
-Use Optuna to get the best hyperparameters:
-
-```bash
-python -m util.optuna_tuner.py
-```
-
-2. **Predict:**  
-
-Install the required dependencies. Then, run the following command to generate the predictive trade signal for the next day:
-
-```bash
-python -m models.model_loder.lstm_loader
-```
