@@ -20,8 +20,8 @@ checkpoint = torch.load(f"./models/best_model/{pth_file_list[0]}")  # 0 is newes
 # Get the hyperparameters from the checkpoint
 hyperparameters = checkpoint["hyperparameters"]
 
-print("-------torch load pth file-------")
-print(hyperparameters)
+# print("-------torch load pth file-------")
+# print(hyperparameters)
 
 # Initialize the StockPricePredictor with the necessary hyperparameters
 predictor = StockPricePredictor(

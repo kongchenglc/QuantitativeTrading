@@ -55,14 +55,14 @@ def get_cleaned_data():
     merged_data[['Sentiment_Positive', 'Sentiment_Neutral', 'Sentiment_Negative']] = merged_data[['Sentiment_Positive', 'Sentiment_Neutral', 'Sentiment_Negative']].ffill()
     
     
-    if merged_data.isnull().values.any():
-        missing_rows = merged_data[merged_data.isnull().any(axis=1)]
-        for index, row in missing_rows.iterrows():
-            missing_columns = row[row.isnull()].index.tolist()
-            print(f"Data contains missing values (NaN)! Row {index} has missing data in columns: {missing_columns}")
+    # if merged_data.isnull().values.any():
+    #     missing_rows = merged_data[merged_data.isnull().any(axis=1)]
+    #     for index, row in missing_rows.iterrows():
+    #         missing_columns = row[row.isnull()].index.tolist()
+    #         print(f"Data contains missing values (NaN)! Row {index} has missing data in columns: {missing_columns}")
        
     merged_data = merged_data.dropna()
-    print("Missed row dropped!")
+    # print("Missed row dropped!")
     
     # Ensure the dates are continuous
     full_date_range = pd.date_range(start=merged_data.index.min(), end=merged_data.index.max(), freq='D')
