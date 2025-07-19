@@ -11,13 +11,14 @@ python -m models.model_loder.lstm_loader
 Screenshot on 2025-07-08:
 ![](./imgs/prediction.png)
 
-Results:
-- Initial Capital: $10000.00
-- Final Value: $15385.39
-- Return: 53.85%
-- Max Drawdown: 17.80%
-- Sharpe Ratio: 1.64
-- Win Rate: 55.00%
+Results (2024-12-05 to 2025-07-08):
+- Initial Capital: $10,000.00  
+- Final Portfolio Value: $15,385.39  
+- Strategy Return: +53.85%  
+- Buy & Hold Return: +10.30%  
+- Max Drawdown: 17.80%  
+- Sharpe Ratio: 1.64  
+- Win Rate: 55.00%  
 - Total Trades: 120
 
 Hope this helps you get rich 💰 — or at least lose money more elegantly. 💸 
