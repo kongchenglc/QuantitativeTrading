@@ -567,12 +567,16 @@ class StockPricePredictor:
         win_trades = trade_actions[trade_actions["portfolio_value"].diff() > 0]
         win_rate = len(win_trades) / len(trade_actions) if len(trade_actions) > 0 else 0
 
+        # Buy & Hold
+        buy_hold_return = (data["close"].iloc[-1] - data["close"].iloc[0]) / data["close"].iloc[0]
+
         print("\nPerformance Metrics:")
         print(f"MSE: {mean_squared_error(trade_df['close'], trade_df['pred']):.4f}")
         print(f"MAE: {mean_absolute_error(trade_df['close'], trade_df['pred']):.4f}")
         print(f"Initial Capital: ${initial_capital:.2f}")
         print(f"Final Value: ${cash:.2f}")
         print(f"Return: {returns*100:.2f}%")
+        print(f"Buy & Hold Return: {buy_hold_return*100:.2f}%")
         print(f"Max Drawdown: {max_drawdown*100:.2f}%")
         print(f"Sharpe Ratio: {sharpe_ratio:.2f}")
         print(f"Win Rate: {win_rate*100:.2f}%")
